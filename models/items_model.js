@@ -2,41 +2,45 @@ const mongoose = require("mongoose");
 
 const itemSchema = new mongoose.Schema(
   {
-    title: {
+    itemName: {
       type: String,
-      required: true,
+      required: [true, "Item name is required"],
       trim: true,
     },
     description: {
       type: String,
-      required: true,
+      required: [true, "Description is required"],
       trim: true,
     },
     type: {
       type: String,
+      required: [true, "Item type is required"],
       enum: ["lost", "found"],
-      required: true,
-      trim: true,
     },
     mediaUrl: {
       type: String,
-      required: true,
+      required: [true, "Media URL is required"],
       trim: true,
+    },
+    claimedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
+      default: null,
+    },
+    isClaimed: {
+      type: Boolean,
+      default: false,
     },
     reportedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
-      required: true,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-      immutable: true, // Prevents modification after creation
+      required: [true, "Reported by is required"],
     },
     status: {
       type: String,
-      enum: ["active", "completed", "cancelled"],
-      default: "active",
+      required: [true, "Status is required"],
+      enum: ["available", "claimed", "resolved"],
+      default: "available",
     },
   },
   {

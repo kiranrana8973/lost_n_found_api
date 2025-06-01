@@ -1,72 +1,82 @@
 const asyncHandler = require("../middleware/async");
 const Batch = require("../models/batch_model");
 
-// Utility for sending error responses
-const sendError = (res, status, message, error = null) => {
-  res.status(status).json({
-    success: false,
-    message,
-    ...(error && { error }),
+// @desc    Create a new batch
+// @route   POST /api/batches
+// @access  Private (Admin)
+
+exports.createBatch = asyncHandler(async (req, res) => {
+  const { batchName } = req.body;
+  console.log("Creating batch with name:", batchName);
+  // if (!batchName) {
+  //   return res.status(400).json({ message: "Batch name is required" });
+  // }
+
+  // const existingBatch = await Batch.find({ batchName });
+  // if (existingBatch) {
+  //   return res.status(400).json({ message: "Batch already exists" });
+  // }
+
+  const batch = await Batch.create({
+    batchName,
   });
-};
+
+  res.status(201).json({
+    success: true,
+    data: batch,
+  });
+});
 
 // @desc    Get all batches
 // @route   GET /api/batches
-// @access  Public
-exports.getBatches = asyncHandler(async (req, res) => {
-  const batches = await Batch.find().sort({ createdAt: -1 });
+// @access  Private (Admin)
+
+exports.getAllBatches = asyncHandler(async (req, res) => {
+  const batches = await Batch.find();
+
   res.status(200).json({
     success: true,
+    count: batches.length,
     data: batches,
   });
 });
 
-// @desc    Create a new batch
-// @route   POST /api/batches
+// @desc    Get a single batch by ID
+// @route   GET /api/batches/:id
 // @access  Private (Admin)
-exports.createBatch = asyncHandler(async (req, res) => {
-  const { batchName, status } = req.body;
-  if (!batchName || !status) {
-    return sendError(res, 400, "batchName and status are required");
+
+exports.getBatchById = asyncHandler(async (req, res) => {
+  const batch = await Batch.findById(req.params.id);
+
+  if (!batch) {
+    return res.status(404).json({ message: "Batch not found" });
   }
-  const newBatch = await Batch.create({ batchName, status });
-  res.status(201).json({
+
+  res.status(200).json({
     success: true,
-    data: newBatch,
+    data: batch,
   });
 });
 
-// @desc    Update a batch
+// @desc    Update a batch by ID
 // @route   PUT /api/batches/:id
 // @access  Private (Admin)
+
 exports.updateBatch = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { batchName, status } = req.body;
-  const updatedBatch = await Batch.findByIdAndUpdate(
-    id,
-    { batchName, status },
+  const { batchName } = req.body;
+
+  const batch = await Batch.findByIdAndUpdate(
+    req.params.id,
+    { batchName },
     { new: true, runValidators: true }
   );
-  if (!updatedBatch) {
-    return sendError(res, 404, "Batch not found");
-  }
-  res.status(200).json({
-    success: true,
-    data: updatedBatch,
-  });
-});
 
-// @desc    Delete a batch
-// @route   DELETE /api/batches/:id
-// @access  Private (Admin)
-exports.deleteBatch = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const deletedBatch = await Batch.findByIdAndDelete(id);
-  if (!deletedBatch) {
-    return sendError(res, 404, "Batch not found");
+  if (!batch) {
+    return res.status(404).json({ message: "Batch not found" });
   }
+
   res.status(200).json({
     success: true,
-    message: "Batch deleted successfully",
+    data: batch,
   });
 });

@@ -21,12 +21,15 @@ connectDB();
 app.use(express.json());
 app.use(morgan("dev")); // Logging middleware
 app.use(cookieParser()); // Cookie parser middleware
-app.use(mongoSanitize()); // Prevent NoSQL injection
+//app.use(mongoSanitize()); // Prevent NoSQL injection
 app.use(helmet()); // Security middleware
 app.use(bodyParser.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(cors()); // Enable CORS
 app.use(express.static(path.join(__dirname, "public"))); // Serve static files
+
 // Routes
+const batchRoutes = require("./routes/batch_route");
+app.use("/api/v1/batches", batchRoutes);
 // const userRoutes = require("./routes/userRoutes");
 // const productRoutes = require("./routes/productRoutes");
 // const orderRoutes = require("./routes/orderRoutes");

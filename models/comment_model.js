@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema(
   {
-    content: {
+    text: {
       type: String,
       required: true,
       trim: true,
@@ -26,3 +26,5 @@ const commentSchema = new mongoose.Schema(
     timestamps: true, // Automatically manage createdAt and updatedAt fields
   }
 );
+
+module.exports = mongoose.model("Comment", commentSchema);
