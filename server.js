@@ -30,6 +30,10 @@ app.use(express.static(path.join(__dirname, "public"))); // Serve static files
 // Routes
 const batchRoutes = require("./routes/batch_route");
 app.use("/api/v1/batches", batchRoutes);
+
+const studentRoutes = require("./routes/student_route");
+app.use("/api/v1/students", studentRoutes);
+
 // const userRoutes = require("./routes/userRoutes");
 // const productRoutes = require("./routes/productRoutes");
 // const orderRoutes = require("./routes/orderRoutes");

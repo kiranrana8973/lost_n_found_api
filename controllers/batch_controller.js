@@ -8,14 +8,11 @@ const Batch = require("../models/batch_model");
 exports.createBatch = asyncHandler(async (req, res) => {
   const { batchName } = req.body;
   console.log("Creating batch with name:", batchName);
-  // if (!batchName) {
-  //   return res.status(400).json({ message: "Batch name is required" });
-  // }
 
-  // const existingBatch = await Batch.find({ batchName });
-  // if (existingBatch) {
-  //   return res.status(400).json({ message: "Batch already exists" });
-  // }
+  const existingBatch = await Batch.findOne({ batchName });
+  if (existingBatch) {
+    return res.status(400).json({ message: "Batch already exists" });
+  }
 
   const batch = await Batch.create({
     batchName,
