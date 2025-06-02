@@ -168,7 +168,7 @@ exports.deleteStudent = asyncHandler(async (req, res) => {
 // @route POST /api/v1/auth/upload
 // @access Private
 
-exports.uploadImage = asyncHandler(async (req, res, next) => {
+exports.uploadProfilePicture = asyncHandler(async (req, res, next) => {
   // // check for the file size and send an error message
   // if (req.file.size > process.env.MAX_FILE_UPLOAD) {
   //   return res.status(400).send({

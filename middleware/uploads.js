@@ -1,28 +1,62 @@
 const multer = require("multer");
-const maxSize = 2 * 1024 * 1024; // 2MB
+const maxSize = 2 * 1024 * 1024; // 20MB
 const path = require("path");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/uploads");
+    if (file.fieldname === "profilePicture") {
+      cb(null, path.join("public", "profile_pictures"));
+    } else if (file.fieldname === "itemPhoto") {
+      cb(null, path.join("public", "item_photos"));
+    } else if (file.fieldname === "itemVideo") {
+      cb(null, path.join("public", "item_videos"));
+    } else {
+      return cb(new Error("Invalid field name for upload."), false);
+    }
   },
   filename: (req, file, cb) => {
-    let ext = path.extname(file.originalname);
-    cb(null, `IMG-${Date.now()}` + ext);
+    const ext = path.extname(file.originalname);
+    let prefix = "file";
+    if (file.fieldname === "profilePicture") {
+      prefix = "pro-pic";
+    } else if (file.fieldname === "itemPhoto") {
+      prefix = "itm-pic";
+    } else if (file.fieldname === "itemVideo") {
+      prefix = "item-vid";
+    }
+    cb(null, `${prefix}-${Date.now()}${ext}`);
   },
 });
 
-const imageFileFilter = (req, file, cb) => {
-  if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-    return cb(new Error("File format not supported."), false);
+const fileFilter = (req, file, cb) => {
+  if (file.fieldname === "itemVideo") {
+    if (!file.originalname.match(/\.(mp4|avi|mov|wmv)$/i)) {
+      cb(new Error("Video format not supported."), false);
+      return;
+    }
+    cb(null, true);
+    return;
+  } else if (
+    file.fieldname === "profilePicture" ||
+    file.fieldname === "itemPhoto"
+  ) {
+    console.log("Im here");
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+      cb(new Error("Image format not supported."), false);
+      return;
+    }
+    cb(null, true);
+    return;
+  } else {
+    cb(new Error("Invalid field name for upload."), false);
+    return;
   }
-  cb(null, true);
 };
 
 const upload = multer({
   storage: storage,
-  fileFilter: imageFileFilter,
+  fileFilter: fileFilter,
   limits: { fileSize: maxSize },
-}).single("profilePicture");
+});
 
 module.exports = upload;
