@@ -44,6 +44,29 @@ exports.createStudent = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Login student
+// @route   POST /api/students/login
+// @access  Public
+
+exports.loginStudent = asyncHandler(async (req, res, next) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ message: "Please provide a username and password" });
+  }
+
+  // Check if student exists
+  const student = await Student.findOne({ username }).select("+password");
+
+  if (!student || !(await student.matchPassword(password))) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  sendTokenResponse(student, 200, res);
+});
+
 // @desc    Get all students
 // @route   GET /api/students
 // @access  Public
@@ -133,10 +156,58 @@ exports.deleteStudent = asyncHandler(async (req, res) => {
     }
   }
 
-  await student.remove();
+  await Student.findByIdAndDelete(req.params.id);
 
   res.status(200).json({
     success: true,
     message: "Student deleted successfully",
   });
 });
+
+// @desc Upload Single Image
+// @route POST /api/v1/auth/upload
+// @access Private
+
+exports.uploadImage = asyncHandler(async (req, res, next) => {
+  // // check for the file size and send an error message
+  // if (req.file.size > process.env.MAX_FILE_UPLOAD) {
+  //   return res.status(400).send({
+  //     message: `Please upload an image less than ${process.env.MAX_FILE_UPLOAD}`,
+  //   });
+  // }
+
+  if (!req.file) {
+    return res.status(400).send({ message: "Please upload a file" });
+  }
+  res.status(200).json({
+    success: true,
+    data: req.file.filename,
+  });
+});
+
+// Get token from model , create cookie and send response
+const sendTokenResponse = (Student, statusCode, res) => {
+  const token = Student.getSignedJwtToken();
+
+  const options = {
+    //Cookie will expire in 30 days
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+
+  // Cookie security is false .if you want https then use this code. do not use in development time
+  if (process.env.NODE_ENV === "proc") {
+    options.secure = true;
+  }
+  //we have created a cookie with a token
+
+  res
+    .status(statusCode)
+    .cookie("token", token, options) // key , value ,options
+    .json({
+      success: true,
+      token,
+    });
+};
