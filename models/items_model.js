@@ -22,6 +22,11 @@ const itemSchema = new mongoose.Schema(
       required: [true, "Media URL is required"],
       trim: true,
     },
+    mediaType: {
+      type: String,
+      enum: ["photo", "video"],
+      default: "photo",
+    },
     claimedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",

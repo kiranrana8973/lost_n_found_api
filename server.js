@@ -34,6 +34,12 @@ app.use("/api/v1/batches", batchRoutes);
 const studentRoutes = require("./routes/student_route");
 app.use("/api/v1/students", studentRoutes);
 
+const itemRoutes = require("./routes/item_route");
+app.use("/api/v1/items", itemRoutes);
+
+const commentRoutes = require("./routes/comment_route");
+app.use("/api/v1/comments", commentRoutes);
+
 // const userRoutes = require("./routes/userRoutes");
 // const productRoutes = require("./routes/productRoutes");
 // const orderRoutes = require("./routes/orderRoutes");

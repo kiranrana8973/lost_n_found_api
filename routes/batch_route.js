@@ -12,6 +12,6 @@ const {
 router.post("/", createBatch);
 router.get("/", getAllBatches);
 router.get("/:id", getBatchById);
-router.put("/:id", updateBatch);
+router.put("/:id", protect, updateBatch);
 
 module.exports = router;

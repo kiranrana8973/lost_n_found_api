@@ -9,33 +9,40 @@ const fs = require("fs");
 // @access  Public
 
 exports.createStudent = asyncHandler(async (req, res) => {
-  const { name, phone, batch, username, password, profilePicture } = req.body;
+  const { name, email, username, password, batchId, phoneNumber, profilePicture } = req.body;
 
   console.log("Creating student with name:", name);
 
   // Check if the batch exists
-  const existingBatch = await Batch.findById(batch);
+  const existingBatch = await Batch.findById(batchId);
   if (!existingBatch) {
     return res.status(404).json({ message: "Batch not found" });
   }
 
+  // Check if the email already exists
+  const existingEmail = await Student.findOne({ email });
+  if (existingEmail) {
+    return res.status(400).json({ message: "Email already exists" });
+  }
+
   // Check if the username already exists
-  const existingStudent = await Student.findOne({ username }).collation({
+  const existingUsername = await Student.findOne({ username }).collation({
     locale: "en",
     strength: 2,
   }); // Case-insensitive check
-  if (existingStudent) {
+  if (existingUsername) {
     return res.status(400).json({ message: "Username already exists" });
   }
 
   // Create the student
   const student = await Student.create({
     name,
-    phone,
-    batch,
+    email,
     username,
-    password, // Note: Password should be hashed in a real application
-    profilePicture: profilePicture || "default-profile.png", // Default profile picture
+    password, // Password will be hashed automatically by the pre-save hook
+    batchId,
+    phoneNumber,
+    profilePicture: profilePicture || "default-profile.png",
   });
 
   res.status(201).json({
@@ -49,16 +56,16 @@ exports.createStudent = asyncHandler(async (req, res) => {
 // @access  Public
 
 exports.loginStudent = asyncHandler(async (req, res, next) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username || !password) {
+  if (!email || !password) {
     return res
       .status(400)
-      .json({ message: "Please provide a username and password" });
+      .json({ message: "Please provide an email and password" });
   }
 
   // Check if student exists
-  const student = await Student.findOne({ username }).select("+password");
+  const student = await Student.findOne({ email }).select("+password");
 
   if (!student || !(await student.matchPassword(password))) {
     return res.status(401).json({ message: "Invalid credentials" });
@@ -72,7 +79,7 @@ exports.loginStudent = asyncHandler(async (req, res, next) => {
 // @access  Public
 
 exports.getAllStudents = asyncHandler(async (req, res) => {
-  const students = await Student.find().populate("batch", "name");
+  const students = await Student.find().populate("batchId", "batchName");
 
   res.status(200).json({
     success: true,
@@ -87,8 +94,8 @@ exports.getAllStudents = asyncHandler(async (req, res) => {
 
 exports.getStudentById = asyncHandler(async (req, res) => {
   const student = await Student.findById(req.params.id).populate(
-    "batch",
-    "name"
+    "batchId",
+    "batchName"
   );
 
   if (!student) {
@@ -106,7 +113,7 @@ exports.getStudentById = asyncHandler(async (req, res) => {
 // @access  Public
 
 exports.updateStudent = asyncHandler(async (req, res) => {
-  const { name, phone, batch, username, password, profilePicture } = req.body;
+  const { name, email, username, password, batchId, phoneNumber, profilePicture } = req.body;
 
   const student = await Student.findById(req.params.id);
 
@@ -116,11 +123,16 @@ exports.updateStudent = asyncHandler(async (req, res) => {
 
   // Update the student fields
   student.name = name || student.name;
-  student.phone = phone || student.phone;
-  student.batch = batch || student.batch;
+  student.email = email || student.email;
   student.username = username || student.username;
-  student.password = password || student.password; // Note: Password should be hashed in a real application
+  student.phoneNumber = phoneNumber || student.phoneNumber;
+  student.batchId = batchId || student.batchId;
   student.profilePicture = profilePicture || student.profilePicture;
+
+  // Only update password if provided (will be hashed by pre-save hook)
+  if (password) {
+    student.password = password;
+  }
 
   await student.save();
 

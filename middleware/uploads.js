@@ -1,5 +1,6 @@
 const multer = require("multer");
-const maxSize = 2 * 1024 * 1024; // 20MB
+const maxSize = 2 * 1024 * 1024; // 2MB for images
+const maxVideoSize = 50 * 1024 * 1024; // 50MB for videos
 const path = require("path");
 
 const storage = multer.diskStorage({
@@ -53,10 +54,23 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({
+// For images (profile pictures and item photos)
+const uploadImage = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: { fileSize: maxSize },
 });
 
+// For videos (item videos)
+const uploadVideo = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: maxVideoSize },
+});
+
+// Export single upload for backward compatibility
+const upload = uploadImage;
+
 module.exports = upload;
+module.exports.uploadImage = uploadImage;
+module.exports.uploadVideo = uploadVideo;

@@ -18,8 +18,8 @@ router.post("/upload", upload.single("profilePicture"), uploadProfilePicture);
 router.post("/", createStudent);
 router.get("/", getAllStudents);
 router.post("/login", loginStudent);
-router.put("/:id", updateStudent);
-router.delete("/:id", deleteStudent);
+router.put("/:id", protect, updateStudent);
+router.delete("/:id", protect, deleteStudent);
 router.get("/:id", getStudentById);
 
 module.exports = router;
