@@ -172,7 +172,7 @@ exports.getRepliesByComment = asyncHandler(async (req, res) => {
 
 // @desc    Update a comment
 // @route   PUT /api/v1/comments/:id
-// @access  Public (should be protected - only comment owner)
+// @access  Private
 exports.updateComment = asyncHandler(async (req, res) => {
   const { text } = req.body;
 
@@ -189,6 +189,14 @@ exports.updateComment = asyncHandler(async (req, res) => {
     return res.status(404).json({
       success: false,
       message: "Comment not found",
+    });
+  }
+
+  // Authorization check: Make sure user owns this comment
+  if (comment.commentedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: "Not authorized to update this comment"
     });
   }
 
@@ -224,7 +232,7 @@ exports.updateComment = asyncHandler(async (req, res) => {
 
 // @desc    Delete a comment
 // @route   DELETE /api/v1/comments/:id
-// @access  Public (should be protected - only comment owner or admin)
+// @access  Private
 exports.deleteComment = asyncHandler(async (req, res) => {
   const comment = await Comment.findById(req.params.id);
 
@@ -232,6 +240,14 @@ exports.deleteComment = asyncHandler(async (req, res) => {
     return res.status(404).json({
       success: false,
       message: "Comment not found",
+    });
+  }
+
+  // Authorization check: Make sure user owns this comment
+  if (comment.commentedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: "Not authorized to delete this comment"
     });
   }
 

@@ -1,5 +1,6 @@
 const asyncHandler = require("../middleware/async");
 const Item = require("../models/items_model");
+const { invalidateItemCache } = require("../utils/cacheInvalidation");
 const path = require("path");
 const fs = require("fs");
 
@@ -17,6 +18,9 @@ exports.createItem = asyncHandler(async (req, res) => {
     mediaUrl,
     reportedBy,
   });
+
+  // Invalidate item cache
+  await invalidateItemCache();
 
   res.status(201).json({
     success: true,
@@ -59,7 +63,7 @@ exports.getItemById = asyncHandler(async (req, res) => {
 
 // @desc    Update an item
 // @route   PUT /api/v1/items/:id
-// @access  Public
+// @access  Private
 exports.updateItem = asyncHandler(async (req, res) => {
   const { itemName, description, type, mediaUrl, claimedBy, isClaimed, status } =
     req.body;
@@ -68,6 +72,13 @@ exports.updateItem = asyncHandler(async (req, res) => {
 
   if (!item) {
     return res.status(404).json({ message: "Item not found" });
+  }
+
+  // Authorization check: Make sure user owns this item
+  if (item.reportedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      message: "Not authorized to update this item"
+    });
   }
 
   // Update the item fields
@@ -81,6 +92,9 @@ exports.updateItem = asyncHandler(async (req, res) => {
 
   await item.save();
 
+  // Invalidate item cache
+  await invalidateItemCache();
+
   res.status(200).json({
     success: true,
     data: item,
@@ -89,12 +103,19 @@ exports.updateItem = asyncHandler(async (req, res) => {
 
 // @desc    Delete an item
 // @route   DELETE /api/v1/items/:id
-// @access  Public
+// @access  Private
 exports.deleteItem = asyncHandler(async (req, res) => {
   const item = await Item.findById(req.params.id);
 
   if (!item) {
     return res.status(404).json({ message: "Item not found" });
+  }
+
+  // Authorization check: Make sure user owns this item
+  if (item.reportedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      message: "Not authorized to delete this item"
+    });
   }
 
   // Remove the item's media file if it exists
@@ -116,6 +137,9 @@ exports.deleteItem = asyncHandler(async (req, res) => {
 
   await Item.findByIdAndDelete(req.params.id);
 
+  // Invalidate item cache
+  await invalidateItemCache();
+
   res.status(200).json({
     success: true,
     message: "Item deleted successfully",
@@ -128,6 +152,13 @@ exports.deleteItem = asyncHandler(async (req, res) => {
 exports.uploadItemPhoto = asyncHandler(async (req, res, next) => {
   if (!req.file) {
     return res.status(400).send({ message: "Please upload a photo file" });
+  }
+
+  // Check for the file size
+  if (req.file.size > process.env.MAX_FILE_UPLOAD) {
+    return res.status(400).send({
+      message: `Please upload an image less than ${process.env.MAX_FILE_UPLOAD} bytes`,
+    });
   }
 
   res.status(200).json({
@@ -143,6 +174,13 @@ exports.uploadItemPhoto = asyncHandler(async (req, res, next) => {
 exports.uploadItemVideo = asyncHandler(async (req, res, next) => {
   if (!req.file) {
     return res.status(400).send({ message: "Please upload a video file" });
+  }
+
+  // Check for the file size
+  if (req.file.size > process.env.MAX_FILE_UPLOAD) {
+    return res.status(400).send({
+      message: `Please upload a video less than ${process.env.MAX_FILE_UPLOAD} bytes`,
+    });
   }
 
   res.status(200).json({

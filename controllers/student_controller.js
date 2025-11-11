@@ -45,9 +45,13 @@ exports.createStudent = asyncHandler(async (req, res) => {
     profilePicture: profilePicture || "default-profile.png",
   });
 
+  // Remove password from response
+  const studentResponse = student.toObject();
+  delete studentResponse.password;
+
   res.status(201).json({
     success: true,
-    data: student,
+    data: studentResponse,
   });
 });
 
@@ -110,7 +114,7 @@ exports.getStudentById = asyncHandler(async (req, res) => {
 
 // @desc    Update a student
 // @route   PUT /api/students/:id
-// @access  Public
+// @access  Private
 
 exports.updateStudent = asyncHandler(async (req, res) => {
   const { name, email, username, password, batchId, phoneNumber, profilePicture } = req.body;
@@ -119,6 +123,13 @@ exports.updateStudent = asyncHandler(async (req, res) => {
 
   if (!student) {
     return res.status(404).json({ message: "Student not found" });
+  }
+
+  // Authorization check: Make sure user is updating their own profile
+  if (student._id.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      message: "Not authorized to update this student profile"
+    });
   }
 
   // Update the student fields
@@ -144,13 +155,20 @@ exports.updateStudent = asyncHandler(async (req, res) => {
 
 // @desc    Delete a student
 // @route   DELETE /api/students/:id
-// @access  Public
+// @access  Private
 
 exports.deleteStudent = asyncHandler(async (req, res) => {
   const student = await Student.findById(req.params.id);
 
   if (!student) {
     return res.status(404).json({ message: "Student not found" });
+  }
+
+  // Authorization check: Make sure user is deleting their own profile
+  if (student._id.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      message: "Not authorized to delete this student profile"
+    });
   }
 
   // Remove the student's profile picture if it exists
@@ -181,16 +199,17 @@ exports.deleteStudent = asyncHandler(async (req, res) => {
 // @access Private
 
 exports.uploadProfilePicture = asyncHandler(async (req, res, next) => {
-  // // check for the file size and send an error message
-  // if (req.file.size > process.env.MAX_FILE_UPLOAD) {
-  //   return res.status(400).send({
-  //     message: `Please upload an image less than ${process.env.MAX_FILE_UPLOAD}`,
-  //   });
-  // }
-
   if (!req.file) {
     return res.status(400).send({ message: "Please upload a file" });
   }
+
+  // Check for the file size and send an error message
+  if (req.file.size > process.env.MAX_FILE_UPLOAD) {
+    return res.status(400).send({
+      message: `Please upload an image less than ${process.env.MAX_FILE_UPLOAD} bytes`,
+    });
+  }
+
   res.status(200).json({
     success: true,
     data: req.file.filename,
@@ -210,7 +229,7 @@ const sendTokenResponse = (Student, statusCode, res) => {
   };
 
   // Cookie security is false .if you want https then use this code. do not use in development time
-  if (process.env.NODE_ENV === "proc") {
+  if (process.env.NODE_ENV === "production") {
     options.secure = true;
   }
   //we have created a cookie with a token

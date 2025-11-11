@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/auth");
+const { cache } = require("../middleware/cache");
 
 const {
   createBatch,
@@ -10,8 +11,8 @@ const {
 } = require("../controllers/batch_controller");
 
 router.post("/", createBatch);
-router.get("/", getAllBatches);
-router.get("/:id", getBatchById);
+router.get("/", cache(1800), getAllBatches); // Cache for 30 minutes
+router.get("/:id", cache(1800), getBatchById); // Cache for 30 minutes
 router.put("/:id", protect, updateBatch);
 
 module.exports = router;
