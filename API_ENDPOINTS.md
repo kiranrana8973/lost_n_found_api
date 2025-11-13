@@ -1,10 +1,10 @@
-# Lost & Found API Endpoints Documentation
+# API Endpoints
 
-Base URL: `http://localhost:3000/api/v1`
+**Base URL:** `http://localhost:3000/api/v1`
 
----
+This doc lists all available endpoints with request/response examples.
 
-## 📚 Table of Contents
+## Table of Contents
 1. [Authentication](#authentication)
 2. [Batch Endpoints](#batch-endpoints)
 3. [Student Endpoints](#student-endpoints)
@@ -12,21 +12,19 @@ Base URL: `http://localhost:3000/api/v1`
 5. [Comment Endpoints](#comment-endpoints)
 6. [Response Format](#response-format)
 
----
+## Authentication
 
-## 🔐 Authentication
-
-Most endpoints require JWT authentication. Include the token in the Authorization header:
+Protected endpoints need a JWT token in the Authorization header:
 
 ```
 Authorization: Bearer <your_jwt_token>
 ```
 
-Get your token by logging in via the student login endpoint.
+You get the token when you login (see student login endpoint below).
 
----
+## Batch Endpoints
 
-## 🎓 Batch Endpoints
+Batches are basically student groups or classes (like "2024-CS-A").
 
 ### Create a Batch
 - **Endpoint:** `POST /batches`
@@ -87,7 +85,7 @@ Get your token by logging in via the student login endpoint.
 
 ---
 
-## 👨‍🎓 Student Endpoints
+## Student Endpoints
 
 ### Register/Create Student
 - **Endpoint:** `POST /students`
@@ -200,7 +198,7 @@ Get your token by logging in via the student login endpoint.
 
 ---
 
-## 📦 Item Endpoints
+## Item Endpoints
 
 ### Create Item
 - **Endpoint:** `POST /items`
@@ -306,7 +304,7 @@ Get your token by logging in via the student login endpoint.
 
 ---
 
-## 💬 Comment Endpoints
+## Comment Endpoints
 
 ### Create Comment
 - **Endpoint:** `POST /comments`
@@ -398,7 +396,7 @@ Get your token by logging in via the student login endpoint.
 
 ---
 
-## 📝 Response Format
+## Response Format
 
 ### Success Response
 ```json
@@ -429,7 +427,7 @@ Cached responses include an additional field:
 
 ---
 
-## 🔒 Security Features
+## Security Features
 
 ### Rate Limiting
 - **General API:** 100 requests per 15 minutes per IP
@@ -452,7 +450,7 @@ Cached responses include an additional field:
 
 ---
 
-## 🚨 Common Error Codes
+## Common Error Codes
 
 - **400** - Bad Request (validation error, missing fields)
 - **401** - Unauthorized (missing or invalid token)
@@ -463,7 +461,7 @@ Cached responses include an additional field:
 
 ---
 
-## 📊 Status Codes
+## Status Codes
 
 - **200** - OK (successful GET, PUT, DELETE)
 - **201** - Created (successful POST)
@@ -476,7 +474,7 @@ Cached responses include an additional field:
 
 ---
 
-## 🧪 Testing
+## Testing Examples
 
 ### Using Postman
 1. Import the endpoints into Postman
@@ -520,7 +518,7 @@ curl http://localhost:3000/api/v1/items \
 
 ---
 
-## 📚 Additional Notes
+## Additional Notes
 
 ### File Upload Guidelines
 - **Profile Pictures:** Stored in `/public/profile_pictures/`

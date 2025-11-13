@@ -1,34 +1,32 @@
 # Lost & Found API
 
-A secure, scalable REST API for managing lost and found items with real-time comments, user authentication, and Redis caching.
+This is a REST API for managing lost and found items on campus. Students can report lost items, post found items, and comment on posts to help reunite people with their belongings.
 
----
+## What's Inside
 
-## 🚀 Features
+The API includes user authentication, file uploads for item photos, a commenting system with @mentions, and Redis caching for better performance. I built it as a learning project to understand backend development with Express and MongoDB.
 
-- ✅ **User Authentication** - JWT-based auth with bcrypt password hashing
-- ✅ **CRUD Operations** - Full create, read, update, delete for all resources
-- ✅ **File Uploads** - Support for images and videos
-- ✅ **Comment System** - Nested comments with @mentions and likes
-- ✅ **Redis Caching** - Fast response times with intelligent caching
-- ✅ **Rate Limiting** - Protection against brute force attacks
-- ✅ **Security Hardening** - XSS prevention, NoSQL injection protection
-- ✅ **Authorization** - Users can only modify their own resources
-- ✅ **CORS Support** - Configurable cross-origin requests
+**Main Features:**
+- User registration and JWT authentication
+- Post lost/found items with photos or videos
+- Comment on items with nested replies and @username mentions
+- Like/unlike comments
+- Redis caching (makes things noticeably faster)
+- Rate limiting to prevent spam
+- Only item owners can edit/delete their posts
 
----
+## Before You Start
 
-## 📋 Prerequisites
+You'll need these installed:
+- Node.js (v14 or higher)
+- MongoDB (v4.4 or higher)
+- Redis (optional, but recommended for caching)
 
-- **Node.js** v14+
-- **MongoDB** v4.4+
-- **Redis** v6+ (optional but recommended)
+## Getting Started
 
----
+### Installation
 
-## ⚡ Quick Start
-
-### 1. Clone & Install
+Clone the repo and install dependencies:
 
 ```bash
 git clone <repository-url>
@@ -36,9 +34,9 @@ cd lost_n_found_api
 npm install
 ```
 
-### 2. Configure Environment
+### Configuration
 
-Create/edit `config/config.env`:
+The API looks for a `config/config.env` file. Here's what mine looks like:
 
 ```env
 NODE_ENV=development
@@ -52,286 +50,218 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
 
-### 3. Start MongoDB
+Make sure to change `JWT_SECRET` to something random and secure.
 
+### Start Your Database
+
+**MongoDB:**
 ```bash
-# macOS
-brew services start mongodb-community
-
-# Linux
-sudo systemctl start mongod
-
-# Windows
-net start MongoDB
+brew services start mongodb-community  # macOS
+sudo systemctl start mongod            # Linux
+net start MongoDB                       # Windows
 ```
 
-### 4. Start Redis (Optional)
-
+**Redis** (optional but makes things faster):
 ```bash
-# macOS
-brew services start redis
-
-# Linux
-sudo systemctl start redis-server
-
-# Windows (WSL2)
-sudo service redis-server start
+brew services start redis              # macOS
+sudo systemctl start redis-server      # Linux
+sudo service redis-server start        # Windows (WSL2)
 ```
 
-### 5. Run Server
+If you don't have Redis, the API still works - it just won't cache responses.
+
+### Add Some Test Data (Optional)
+
+I included a seed script to populate the database with fake students and items for testing:
+
+```bash
+node seed-data.js -i
+```
+
+This adds 12 students, 15 items, and some comments. All test accounts use the password `password123`.
+
+Try logging in as: `sarah.johnson@college.edu` / `password123`
+
+To wipe everything clean:
+```bash
+node seed-data.js -d
+```
+
+### Run the Server
 
 ```bash
 npm run dev
 ```
 
-Server runs on: `http://localhost:3000`
+The API will be running at `http://localhost:3000`
 
----
+If everything worked, you should see colorful terminal output showing MongoDB and Redis connections.
 
-## 📚 Documentation
+## Documentation
 
-### **Complete Guides:**
-- **[API Endpoints](API_ENDPOINTS.md)** - Full API documentation
-- **[Redis Setup](REDIS_SETUP_COMPLETE.md)** - Redis installation for all OS
-- **[API Testing](API_TESTING.md)** - Automated testing guide
+Check these files for more details:
+- [API_ENDPOINTS.md](API_ENDPOINTS.md) - Full list of available endpoints with examples
+- [REDIS_SETUP_COMPLETE.md](REDIS_SETUP_COMPLETE.md) - How to install Redis on different operating systems
+- [API_TESTING.md](API_TESTING.md) - Testing guide
+- [TEACHING_NOTES.md](TEACHING_NOTES.md) - Notes for instructors (if you're using this for teaching)
 
-### **Quick Links:**
+**Quick reference:**
 - Base URL: `http://localhost:3000/api/v1`
-- API Version: v1
-- Authentication: Bearer Token (JWT)
+- Auth: JWT tokens (pass as `Authorization: Bearer YOUR_TOKEN`)
 
----
 
-## 🗂️ Project Structure
+## Project Structure
+
+Here's how the code is organized:
 
 ```
 lost_n_found_api/
-├── config/
-│   ├── config.env           # Environment variables
-│   ├── db.js                # MongoDB connection
-│   └── redis.js             # Redis connection
-├── controllers/
-│   ├── batch_controller.js  # Batch logic
-│   ├── comment_controller.js# Comment logic
-│   ├── item_controller.js   # Item logic
-│   └── student_controller.js# Student logic
-├── middleware/
-│   ├── async.js             # Async handler wrapper
-│   ├── auth.js              # JWT authentication
-│   ├── cache.js             # Redis caching
-│   ├── errorHandler.js      # Global error handler
-│   └── uploads.js           # File upload handler
-├── models/
-│   ├── batch_model.js       # Batch schema
-│   ├── comment_model.js     # Comment schema
-│   ├── items_model.js       # Item schema
-│   └── student_model.js     # Student schema
-├── routes/
-│   ├── batch_route.js       # Batch endpoints
-│   ├── comment_route.js     # Comment endpoints
-│   ├── item_route.js        # Item endpoints
-│   └── student_route.js     # Student endpoints
-├── utils/
-│   └── cacheInvalidation.js # Cache management
-├── public/
-│   ├── item_photos/         # Uploaded item images
-│   ├── item_videos/         # Uploaded item videos
-│   └── profile_pictures/    # User profile pictures
-├── server.js                # Main application entry
-├── test-api.js              # Automated API tests
-└── package.json             # Dependencies
+├── config/          - Database connections and environment config
+├── controllers/     - Request handlers (the main logic)
+├── middleware/      - Auth, caching, file uploads, error handling
+├── models/          - MongoDB schemas
+├── routes/          - API endpoint definitions
+├── utils/           - Helper functions like cache invalidation
+├── public/          - Uploaded files (photos, videos, profile pics)
+├── server.js        - Main entry point
+└── seed-data.js     - Script to add test data
 ```
 
----
+## API Endpoints
 
-## 🔗 API Endpoints Summary
+The API has endpoints for batches (student groups/classes), students, items, and comments.
 
-### **Batches**
-- `POST /api/v1/batches` - Create batch
-- `GET /api/v1/batches` - Get all batches (cached 30min)
-- `GET /api/v1/batches/:id` - Get batch by ID (cached 30min)
-- `PUT /api/v1/batches/:id` - Update batch 🔒
+**Batches:**
+- `POST /batches` - Create a new batch
+- `GET /batches` - List all batches
+- `GET /batches/:id` - Get specific batch
+- `PUT /batches/:id` - Update batch (protected)
 
-### **Students**
-- `POST /api/v1/students` - Register student
-- `POST /api/v1/students/login` - Login
-- `GET /api/v1/students` - Get all students
-- `GET /api/v1/students/:id` - Get student by ID
-- `PUT /api/v1/students/:id` - Update student 🔒
-- `DELETE /api/v1/students/:id` - Delete student 🔒
-- `POST /api/v1/students/upload` - Upload profile picture
+**Students:**
+- `POST /students` - Register new student
+- `POST /students/login` - Login and get JWT token
+- `GET /students` - List all students
+- `GET /students/:id` - Get student profile
+- `PUT /students/:id` - Update own profile (protected)
+- `DELETE /students/:id` - Delete own account (protected)
+- `POST /students/upload` - Upload profile picture
 
-### **Items**
-- `POST /api/v1/items` - Create item 🔒
-- `GET /api/v1/items` - Get all items (cached 5min)
-- `GET /api/v1/items/:id` - Get item by ID (cached 10min)
-- `PUT /api/v1/items/:id` - Update item 🔒
-- `DELETE /api/v1/items/:id` - Delete item 🔒
-- `POST /api/v1/items/upload-photo` - Upload photo
-- `POST /api/v1/items/upload-video` - Upload video
+**Items (Lost & Found):**
+- `POST /items` - Report lost/found item (protected)
+- `GET /items` - Browse all items
+- `GET /items/:id` - View item details
+- `PUT /items/:id` - Update own item (protected)
+- `DELETE /items/:id` - Delete own item (protected)
+- `POST /items/upload-photo` - Upload item photo
+- `POST /items/upload-video` - Upload item video
 
-### **Comments**
-- `POST /api/v1/comments` - Create comment 🔒
-- `GET /api/v1/comments/item/:itemId` - Get item comments
-- `PUT /api/v1/comments/:id` - Update comment 🔒
-- `DELETE /api/v1/comments/:id` - Delete comment 🔒
-- `POST /api/v1/comments/:id/like` - Like comment 🔒
+**Comments:**
+- `POST /comments` - Add comment (protected)
+- `GET /comments/item/:itemId` - Get comments for an item
+- `PUT /comments/:id` - Edit own comment (protected)
+- `DELETE /comments/:id` - Delete own comment (protected)
+- `POST /comments/:id/like` - Like/unlike comment (protected)
 
-🔒 = Requires Authentication
+All endpoints are under `/api/v1/`. Protected routes need a JWT token in the Authorization header.
 
----
+## Testing
 
-## 🧪 Testing
-
-### Automated Tests
+There's an automated test script you can run:
 
 ```bash
 npm test
 ```
 
-This runs comprehensive tests on all endpoints and shows:
-- ✅ Passed tests
-- ❌ Failed tests with error details
-- 📊 Success rate percentage
+It tests all the main endpoints and shows what passed or failed.
 
-### Manual Testing
-
-Use Postman, Thunder Client, or cURL:
+For manual testing, I usually use Postman or just cURL:
 
 ```bash
-# Example: Get all items
+# Get all items
 curl http://localhost:3000/api/v1/items
 
-# Example: Login
+# Login example
 curl -X POST http://localhost:3000/api/v1/students/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
+  -d '{"email":"sarah.johnson@college.edu","password":"password123"}'
 ```
 
----
+## Security
 
-## 🔒 Security Features
+I tried to follow security best practices:
+- Passwords are hashed with bcrypt before storing
+- JWT tokens for authentication (they expire after 30 days)
+- Rate limiting: 5 login attempts per 15 minutes, 100 requests per 15 minutes for other endpoints
+- Input sanitization to prevent XSS and NoSQL injection
+- Users can only edit/delete their own posts
+- File uploads are validated (type and size)
+- CORS is configurable
 
-### **Implemented:**
-- ✅ JWT Authentication (30-day expiration)
-- ✅ Password Hashing (bcrypt, 10 rounds)
-- ✅ Rate Limiting (100 req/15min general, 5 req/15min login)
-- ✅ NoSQL Injection Prevention
-- ✅ XSS Attack Prevention
-- ✅ CORS Protection
-- ✅ Helmet Security Headers
-- ✅ Input Sanitization
-- ✅ Authorization Checks (users can only modify own data)
-- ✅ File Upload Validation (type & size)
-- ✅ httpOnly Cookies
+In development mode, you get detailed error messages. In production, errors are more generic to avoid leaking sensitive info.
 
-### **Environment-Specific:**
-- Development: Detailed error messages with stack traces
-- Production: Generic error messages only
 
----
+## Performance
 
-## 📊 Performance
+Redis caching makes a noticeable difference:
+- Without Redis: responses take 50-200ms
+- With Redis: cached responses take 2-10ms
 
-### **Without Redis:**
-- Average response time: 50-200ms
-- Database hit: Every request
+The cache automatically clears when data changes. Here's what gets cached:
+- Batches list: 30 minutes
+- Items list: 5 minutes
+- Individual items: 10 minutes
 
-### **With Redis:**
-- Cached response time: 2-10ms ⚡
-- 20-50x faster for cached endpoints!
-- Reduced database load by ~80%
+If Redis isn't running, everything still works - just slower.
 
-### **Cache Strategy:**
-- Batches: 30 minutes
-- Items (list): 5 minutes
-- Items (single): 10 minutes
-- Auto-invalidation on create/update/delete
-
----
-
-## 🛠️ Development Scripts
+## Available Scripts
 
 ```bash
-# Start development server (with nodemon)
-npm run dev
-
-# Start production server
-npm start
-
-# Run automated tests
-npm test
+npm run dev     # Development server with auto-reload
+npm start       # Production server
+npm test        # Run API tests
 ```
 
----
+## Deployment
 
-## 🌐 Deployment
+For production, you'll want to:
+1. Use a real MongoDB instance / YOu can use MongoDB Atlas
+2. Set a strong JWT_SECRET (at least 32 characters)
+3. Configure CORS_ORIGIN to your frontend domain
+4. Set NODE_ENV to "production"
 
-### **Environment Variables for Production:**
-
+Sample production config:
 ```env
 NODE_ENV=production
 PORT=5000
-LOCAL_DATABASE_URI=mongodb+srv://username:password@cluster.mongodb.net/dbname
-JWT_SECRET=super_long_random_secret_minimum_32_characters
+LOCAL_DATABASE_URI=mongodb+srv://user:pass@cluster.mongodb.net/dbname
+JWT_SECRET=your_super_long_random_secret_here
 CORS_ORIGIN=https://yourdomain.com
 REDIS_HOST=your-redis-host.com
 REDIS_PASSWORD=your-redis-password
-MAX_FILE_UPLOAD=10000000
 ```
 
-### **Recommended Platforms:**
-- **Heroku** - Easy deployment
-- **Railway** - Modern platform
-- **DigitalOcean** - App Platform
-- **AWS** - EC2 + ElastiCache (Redis)
-- **Render** - Free tier available
+The app should work on Heroku, Railway, DigitalOcean, AWS, or Render without much modification.
+
+## Contributing
+
+Feel free to fork this and make it your own. If you add something cool, pull requests are welcome.
+
+## License
+
+ISC License
+
+## Author
+
+Built by Kiran Rana as a learning project and teaching tool.
+
+## Helpful Links
+
+- [MongoDB docs](https://docs.mongodb.com/)
+- [Express.js guide](https://expressjs.com/)
+- [Redis documentation](https://redis.io/documentation)
+- [JWT explained](https://jwt.io/)
 
 ---
 
-## 🤝 Contributing
+**Tech Stack:** Node.js, Express, MongoDB, Redis
 
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature-name`
-3. Commit changes: `git commit -m 'Add feature'`
-4. Push to branch: `git push origin feature-name`
-5. Submit pull request
-
----
-
-## 📝 License
-
-ISC License - See LICENSE file for details
-
----
-
-## 👨‍💻 Author
-
-**Kiran Rana**
-
----
-
-## 🔗 Resources
-
-- [MongoDB Documentation](https://docs.mongodb.com/)
-- [Express.js Guide](https://expressjs.com/)
-- [Redis Documentation](https://redis.io/documentation)
-- [JWT.io](https://jwt.io/)
-- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
-
----
-
-## 📞 Support
-
-For issues and questions:
-1. Check [API_ENDPOINTS.md](API_ENDPOINTS.md) for API documentation
-2. Check [REDIS_SETUP_COMPLETE.md](REDIS_SETUP_COMPLETE.md) for Redis setup
-3. Check [API_TESTING.md](API_TESTING.md) for testing guide
-4. Run `npm test` to diagnose issues
-
----
-
-**Built with ❤️ using Node.js, Express, MongoDB, and Redis**
-
-**Version:** 1.0.0
-**Last Updated:** January 2025
