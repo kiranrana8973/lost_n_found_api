@@ -1,8 +1,9 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
+import 'colors';
 
-const connectDB = async () => {
+const connectDB = async (): Promise<void> => {
   try {
-    const conn = await mongoose.connect(process.env.LOCAL_DATABASE_URI);
+    const conn = await mongoose.connect(process.env.LOCAL_DATABASE_URI as string);
     console.log(
       `MongoDB connected to : ${conn.connection.host}`.yellow.underline.bold
     );
@@ -12,4 +13,4 @@ const connectDB = async () => {
   }
 };
 
-module.exports = connectDB;
+export default connectDB;
