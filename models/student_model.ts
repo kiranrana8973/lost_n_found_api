@@ -68,9 +68,8 @@ const studentSchema = new Schema<IStudent>({
 });
 
 // Encrypt password using bcrypt before saving
-studentSchema.pre('save', async function (next) {
+studentSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    next();
     return;
   }
   const salt = await bcrypt.genSalt(10);
@@ -79,8 +78,9 @@ studentSchema.pre('save', async function (next) {
 
 // Sign JWT and return
 studentSchema.methods.getSignedJwtToken = function (): string {
+  const expiresIn = process.env.JWT_EXPIRE || '30d';
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET as string, {
-    expiresIn: process.env.JWT_EXPIRE,
+    expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
   });
 };
 

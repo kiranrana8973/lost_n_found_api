@@ -38,5 +38,8 @@ FINAL_REVIEW.md
 db_design.md
 API_TESTING.md
 
+# Build output
+dist/
+
 # Misc
 *.log

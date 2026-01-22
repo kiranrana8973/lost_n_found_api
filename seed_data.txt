@@ -1,2 +1,56 @@
-node seed-data.js -i — Import/seed all data
-node seed-data.js -d — Delete all data
+SEED DATA COMMANDS
+==================
+
+Import/seed all data:
+  npm run seed
+
+Delete all data:
+  npm run seed:destroy
+
+
+SEEDED DATA SUMMARY
+===================
+
+Batches (8):
+  35-A, 35-B, 35-C, 35-D, 36-A, 36-B, 36-C, 36-D
+
+Categories (10):
+  - Electronics (Phones, laptops, chargers, earbuds)
+  - Bags & Accessories (Backpacks, wallets, purses, keychains)
+  - Clothing (Jackets, hoodies, shoes, hats)
+  - Books & Stationery (Textbooks, notebooks, calculators, pens)
+  - ID & Cards (Student ID, credit cards, access cards)
+  - Keys (Car keys, room keys, bike locks)
+  - Sports & Fitness (Water bottles, fitness trackers, sports gear)
+  - Jewelry (Necklaces, rings, watches, bracelets)
+  - Eyewear (Glasses, sunglasses, contact lens cases)
+  - Others (Miscellaneous items)
+
+Students (13):
+  All accounts use password: password123
+
+  | Name              | Email                               | Username    |
+  |-------------------|-------------------------------------|-------------|
+  | Kiran Rana        | kiranrana@softwarica.edu.np         | kiranr      |
+  | Sarah Johnson     | sarah.johnson@softwarica.edu.np     | sarahj      |
+  | Michael Chen      | michael.chen@softwarica.edu.np      | mikechen    |
+  | Emily Rodriguez   | emily.rodriguez@softwarica.edu.np   | emilyrod    |
+  | James Wilson      | james.wilson@softwarica.edu.np      | jameswilson |
+  | Priya Patel       | priya.patel@softwarica.edu.np       | priyap      |
+  | David Kim         | david.kim@softwarica.edu.np         | davidkim    |
+  | Olivia Martinez   | olivia.martinez@softwarica.edu.np   | oliviam     |
+  | Ryan Thompson     | ryan.thompson@softwarica.edu.np     | ryant       |
+  | Sophia Lee        | sophia.lee@softwarica.edu.np        | sophialee   |
+  | Alex Garcia       | alex.garcia@softwarica.edu.np       | alexg       |
+  | Emma Brown        | emma.brown@softwarica.edu.np        | emmab       |
+  | Daniel Singh      | daniel.singh@softwarica.edu.np      | daniels     |
+
+Items (25):
+  - 12 Lost items
+  - 13 Found items
+  - Various statuses: available, claimed, resolved
+  - Sample items include: backpacks, phones, wallets, keys, clothing, etc.
+
+Comments (30):
+  - Sample comments with @mentions
+  - Distributed across various items

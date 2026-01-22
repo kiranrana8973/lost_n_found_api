@@ -1,0 +1,55 @@
+===============================================
+  LOST & FOUND API - Installation & Running
+===============================================
+
+This is a TypeScript project.
+
+PREREQUISITES
+-------------
+- Node.js (v18 or higher)
+- MongoDB (local or cloud instance)
+- npm (comes with Node.js)
+
+
+STEP 1: Install Dependencies
+----------------------------
+npm install
+
+
+STEP 2: Configure Environment
+-----------------------------
+Create a .env file or config/config.env with your environment variables:
+- MongoDB connection string
+- JWT secret
+- Port number
+
+
+STEP 3: Run the Server
+----------------------
+
+Development mode (with hot reload):
+  npm run dev
+
+Production mode:
+  npm run build
+  npm start
+
+
+OPTIONAL COMMANDS
+-----------------
+Seed database with sample data:
+  npm run seed
+
+Clear seeded data:
+  npm run seed:destroy
+
+Run API tests:
+  npm run test
+
+
+SERVER ENDPOINTS
+----------------
+Once running, the API will be available at:
+  http://localhost:<PORT>
+
+Check your config for the exact port number.

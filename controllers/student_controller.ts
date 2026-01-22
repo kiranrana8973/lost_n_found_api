@@ -51,7 +51,7 @@ export const createStudent = asyncHandler(
     });
 
     // Remove password from response
-    const studentResponse = student.toObject() as Record<string, unknown>;
+    const studentResponse = student.toObject() as unknown as Record<string, unknown>;
     delete studentResponse.password;
 
     res.status(201).json({

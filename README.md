@@ -1,6 +1,6 @@
 # Lost & Found API
 
-A simple Lost and Found REST API for mobile and web applications.
+A Lost and Found REST API built with **TypeScript**, Express.js, and MongoDB for mobile and web applications.
 
 **This project is solely for college project purposes only.**
 
@@ -406,8 +406,14 @@ npm install
 # JWT_SECRET=your_secret_key
 # JWT_EXPIRE=30d
 
-# Start server
+# Start development server (with hot reload)
 npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
 ```
 
 ---
@@ -418,10 +424,10 @@ Populate the database with sample data for testing:
 
 ```bash
 # Add seed data (batches, categories, students, items, comments)
-node seed-data.js -i
+npm run seed
 
 # Delete all seed data
-node seed-data.js -d
+npm run seed:destroy
 ```
 
 **Test Credentials (after seeding):**
@@ -460,6 +466,7 @@ All seeded accounts use password: `password123`
 
 ## Tech Stack
 
+- **TypeScript** - Strongly typed JavaScript
 - Node.js
 - Express.js v5
 - MongoDB (Mongoose)
