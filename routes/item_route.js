@@ -14,8 +14,18 @@ const {
 } = require("../controllers/item_controller");
 
 // Upload routes (protected - user must be logged in to upload)
-router.post("/upload-photo", protect, uploadImage.single("itemPhoto"), uploadItemPhoto);
-router.post("/upload-video", protect, uploadVideo.single("itemVideo"), uploadItemVideo);
+router.post(
+  "/upload-photo",
+  protect,
+  uploadImage.single("itemPhoto"),
+  uploadItemPhoto,
+);
+router.post(
+  "/upload-video",
+  protect,
+  uploadVideo.single("itemVideo"),
+  uploadItemVideo,
+);
 
 // CRUD routes
 router.post("/", protect, createItem);
