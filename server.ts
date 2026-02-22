@@ -17,6 +17,7 @@ import categoryRoutes from './routes/category_route';
 import studentRoutes from './routes/student_route';
 import itemRoutes from './routes/item_route';
 import commentRoutes from './routes/comment_route';
+import { refreshAccessToken } from './controllers/student_controller';
 
 const app: Application = express();
 
@@ -123,14 +124,16 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions)); // Enable CORS with options
 
 app.use(limiter); // Apply rate limiting to all requests
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+app.use(express.static(path.join(__dirname, '..', 'public'))); // Serve static files
 
 // Routes
 app.use('/api/v1/batches', batchRoutes);
 app.use('/api/v1/categories', categoryRoutes);
 
-// Apply stricter rate limiting to login endpoint
+// Apply stricter rate limiting to login and refresh endpoints
 app.use('/api/v1/students/login', authLimiter);
+app.use('/api/v1/auth/refresh', authLimiter);
+app.post('/api/v1/auth/refresh', refreshAccessToken);
 app.use('/api/v1/students', studentRoutes);
 
 app.use('/api/v1/items', itemRoutes);

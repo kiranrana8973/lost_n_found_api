@@ -1,9 +1,19 @@
 import { Request, Response, NextFunction, CookieOptions } from 'express';
+import crypto from 'crypto';
 import asyncHandler from '../middleware/async';
 import Student, { IStudent } from '../models/student_model';
 import Batch from '../models/batch_model';
+import RefreshToken from '../models/refresh_token_model';
 import path from 'path';
 import fs from 'fs';
+
+const hashToken = (token: string): string => {
+  return crypto.createHash('sha256').update(token).digest('hex');
+};
+
+const generateRefreshToken = (): string => {
+  return crypto.randomBytes(40).toString('hex');
+};
 
 // @desc    Create a new student
 // @route   POST /api/students
@@ -83,7 +93,7 @@ export const loginStudent = asyncHandler(
       return;
     }
 
-    sendTokenResponse(student, 200, res);
+    await sendTokenResponse(student, 200, res);
   }
 );
 
@@ -240,25 +250,36 @@ export const uploadProfilePicture = asyncHandler(
 );
 
 // Get token from model, create cookie and send response
-const sendTokenResponse = (
+const sendTokenResponse = async (
   student: IStudent,
   statusCode: number,
   res: Response
-): void => {
-  const token = student.getSignedJwtToken();
+): Promise<void> => {
+  const accessToken = student.getSignedJwtToken();
 
-  const cookieExpire = parseInt(process.env.JWT_COOKIE_EXPIRE || '30', 10);
+  // Generate and store refresh token
+  const rawRefreshToken = generateRefreshToken();
+  const hashedRefreshToken = hashToken(rawRefreshToken);
+
+  const refreshExpireDays = parseInt(
+    process.env.REFRESH_TOKEN_EXPIRE_DAYS || '7',
+    10
+  );
+  await RefreshToken.create({
+    token: hashedRefreshToken,
+    student: student._id,
+    expiresAt: new Date(Date.now() + refreshExpireDays * 24 * 60 * 60 * 1000),
+  });
+
+  const cookieExpire = parseInt(process.env.JWT_COOKIE_EXPIRE || '1', 10);
   const options: CookieOptions = {
-    // Cookie will expire in 30 days
     expires: new Date(Date.now() + cookieExpire * 24 * 60 * 60 * 1000),
     httpOnly: true,
   };
 
-  // Cookie security is false. if you want https then use this code. do not use in development time
   if (process.env.NODE_ENV === 'production') {
     options.secure = true;
   }
-  // we have created a cookie with a token
 
   // Remove password from user object
   const userResponse = student.toObject() as Record<string, unknown>;
@@ -266,10 +287,120 @@ const sendTokenResponse = (
 
   res
     .status(statusCode)
-    .cookie('token', token, options) // key, value, options
+    .cookie('token', accessToken, options)
     .json({
       success: true,
-      token,
+      token: accessToken,
+      refreshToken: rawRefreshToken,
       data: userResponse,
     });
 };
+
+// @desc    Refresh access token using refresh token
+// @route   POST /api/v1/auth/refresh
+// @access  Public
+export const refreshAccessToken = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    let rawRefreshToken: string | undefined = req.body.refreshToken;
+
+    if (
+      !rawRefreshToken &&
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      rawRefreshToken = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!rawRefreshToken) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide a refresh token',
+      });
+      return;
+    }
+
+    // Hash and look up in DB
+    const hashedToken = hashToken(rawRefreshToken);
+    const storedToken = await RefreshToken.findOne({ token: hashedToken });
+
+    if (!storedToken) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token',
+      });
+      return;
+    }
+
+    if (storedToken.expiresAt < new Date()) {
+      await RefreshToken.deleteOne({ _id: storedToken._id });
+      res.status(401).json({
+        success: false,
+        message: 'Refresh token has expired',
+      });
+      return;
+    }
+
+    // Token rotation: delete old token
+    await RefreshToken.deleteOne({ _id: storedToken._id });
+
+    const student = await Student.findById(storedToken.student);
+    if (!student) {
+      res.status(401).json({
+        success: false,
+        message: 'User not found',
+      });
+      return;
+    }
+
+    // Issue new access + refresh token pair
+    const newAccessToken = student.getSignedJwtToken();
+    const newRawRefreshToken = generateRefreshToken();
+    const newHashedRefreshToken = hashToken(newRawRefreshToken);
+
+    const refreshExpireDays = parseInt(
+      process.env.REFRESH_TOKEN_EXPIRE_DAYS || '7',
+      10
+    );
+    await RefreshToken.create({
+      token: newHashedRefreshToken,
+      student: student._id,
+      expiresAt: new Date(
+        Date.now() + refreshExpireDays * 24 * 60 * 60 * 1000
+      ),
+    });
+
+    const userResponse = student.toObject() as unknown as Record<string, unknown>;
+    delete userResponse.password;
+
+    res.status(200).json({
+      success: true,
+      token: newAccessToken,
+      refreshToken: newRawRefreshToken,
+      data: userResponse,
+    });
+  }
+);
+
+// @desc    Logout student / invalidate refresh token
+// @route   POST /api/v1/students/logout
+// @access  Public
+export const logoutStudent = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const { refreshToken } = req.body;
+
+    if (refreshToken) {
+      const hashedToken = hashToken(refreshToken);
+      await RefreshToken.deleteOne({ token: hashedToken });
+    }
+
+    res.cookie('token', 'none', {
+      expires: new Date(Date.now() + 10 * 1000),
+      httpOnly: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  }
+);

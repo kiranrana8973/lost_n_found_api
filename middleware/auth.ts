@@ -56,7 +56,7 @@ export const protect: RequestHandler = asyncHandler(
 );
 
 // Grant access to specific roles, i.e publisher and admin
-export const authorize = (...roles: string[]): RequestHandler => {
+export const authorize = (...roles: string[]): RequestHandler => {4
   return (req: Request, res: Response, next: NextFunction): void | Response => {
     // Check if it is admin or publisher. user cannot access
     if (!req.user || !roles.includes(req.user.role || '')) {

@@ -65,6 +65,7 @@ export const getAllItems = asyncHandler(
   }
 );
 
+
 // @desc    Get a single item by ID
 // @route   GET /api/v1/items/:id
 // @access  Public
@@ -206,7 +207,7 @@ export const uploadItemPhoto = asyncHandler(
 
     res.status(200).json({
       success: true,
-      data: req.file.filename,
+      data: `item_photos/${req.file.filename}`,
       message: 'Item photo uploaded successfully',
     });
   }
@@ -233,7 +234,7 @@ export const uploadItemVideo = asyncHandler(
 
     res.status(200).json({
       success: true,
-      data: req.file.filename,
+      data: `item_videos/${req.file.filename}`,
       message: 'Item video uploaded successfully',
     });
   }
