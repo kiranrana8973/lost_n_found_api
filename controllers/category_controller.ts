@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import asyncHandler from '../middleware/async';
+import { invalidateCache } from '../middleware/cache';
 import Category from '../models/category_model';
 
 // @desc    Create a new category
@@ -22,6 +23,8 @@ export const createCategory = asyncHandler(
       description: description?.trim(),
       status,
     });
+
+    await invalidateCache('lnf:categories:all');
 
     res.status(201).json({
       success: true,
@@ -82,6 +85,12 @@ export const updateCategory = asyncHandler(
       return;
     }
 
+    await invalidateCache(
+      'lnf:categories:all',
+      `lnf:categories:id:id:${req.params.id}`,
+      'lnf:items:all:*'
+    );
+
     res.status(200).json({
       success: true,
       data: category,
@@ -100,6 +109,12 @@ export const deleteCategory = asyncHandler(
       res.status(404).json({ message: 'Category not found' });
       return;
     }
+
+    await invalidateCache(
+      'lnf:categories:all',
+      `lnf:categories:id:id:${req.params.id}`,
+      'lnf:items:all:*'
+    );
 
     res.status(200).json({
       success: true,

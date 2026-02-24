@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import { protect } from '../middleware/auth';
+import { cacheMiddleware } from '../middleware/cache';
 import {
   createComment,
   getCommentsByItem,
@@ -19,10 +20,10 @@ router.put('/:id', protect, updateComment);
 router.delete('/:id', protect, deleteComment);
 
 // Get comments by item
-router.get('/item/:itemId', getCommentsByItem);
+router.get('/item/:itemId', cacheMiddleware('lnf:comments:item', 30), getCommentsByItem);
 
 // Get replies for a comment
-router.get('/:commentId/replies', getRepliesByComment);
+router.get('/:commentId/replies', cacheMiddleware('lnf:comments:replies', 30), getRepliesByComment);
 
 // Like/Unlike a comment
 router.post('/:id/like', protect, toggleLike);

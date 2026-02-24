@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 import upload from '../middleware/uploads';
 import { protect } from '../middleware/auth';
+import { cacheMiddleware } from '../middleware/cache';
 import {
   createStudent,
   getAllStudents,
@@ -22,6 +23,6 @@ router.post('/login', loginStudent);
 router.post('/logout', logoutStudent);
 router.put('/:id', protect, updateStudent);
 router.delete('/:id', protect, deleteStudent);
-router.get('/:id', getStudentById);
+router.get('/:id', cacheMiddleware('lnf:students:id', 120), getStudentById);
 
 export default router;

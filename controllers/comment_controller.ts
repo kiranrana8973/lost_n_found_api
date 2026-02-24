@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import asyncHandler from '../middleware/async';
+import { invalidateCache } from '../middleware/cache';
 import Comment, { IComment } from '../models/comment_model';
 import Student from '../models/student_model';
 import Item from '../models/items_model';
@@ -96,6 +97,11 @@ export const createComment = asyncHandler(
       { path: 'commentedBy', select: 'name username profilePicture' },
       { path: 'mentionedUsers', select: 'name username' },
     ]);
+
+    await invalidateCache(
+      `lnf:comments:item:itemId:${itemId}:*`,
+      `lnf:comments:replies:*`
+    );
 
     res.status(201).json({
       success: true,
@@ -265,6 +271,11 @@ export const updateComment = asyncHandler(
       { path: 'mentionedUsers', select: 'name username' },
     ]);
 
+    await invalidateCache(
+      `lnf:comments:item:itemId:${comment.item}:*`,
+      `lnf:comments:replies:*`
+    );
+
     res.status(200).json({
       success: true,
       data: comment,
@@ -302,6 +313,11 @@ export const deleteComment = asyncHandler(
     }
 
     await Comment.findByIdAndDelete(req.params.id);
+
+    await invalidateCache(
+      `lnf:comments:item:itemId:${comment.item}:*`,
+      `lnf:comments:replies:*`
+    );
 
     res.status(200).json({
       success: true,
@@ -362,6 +378,11 @@ export const toggleLike = asyncHandler(
     await comment.save();
 
     await comment.populate('likes', 'name username');
+
+    await invalidateCache(
+      `lnf:comments:item:itemId:${comment.item}:*`,
+      `lnf:comments:replies:*`
+    );
 
     res.status(200).json({
       success: true,

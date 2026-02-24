@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 import { uploadImage, uploadVideo } from '../middleware/uploads';
 import { protect } from '../middleware/auth';
+import { cacheMiddleware } from '../middleware/cache';
 import {
   createItem,
   getAllItems,
@@ -19,8 +20,8 @@ router.post('/upload-video', protect, uploadVideo.single('itemVideo'), uploadIte
 
 // CRUD routes
 router.post('/', protect, createItem);
-router.get('/', getAllItems);
-router.get('/:id', getItemById);
+router.get('/', cacheMiddleware('lnf:items:all', 30), getAllItems);
+router.get('/:id', cacheMiddleware('lnf:items:id', 60), getItemById);
 router.put('/:id', protect, updateItem);
 router.delete('/:id', protect, deleteItem);
 

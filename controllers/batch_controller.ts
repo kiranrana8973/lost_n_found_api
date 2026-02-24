@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import asyncHandler from '../middleware/async';
+import { invalidateCache } from '../middleware/cache';
 import Batch from '../models/batch_model';
 
 // @desc    Create a new batch
@@ -21,6 +22,8 @@ export const createBatch = asyncHandler(
       batchName: batchName.trim(),
       status,
     });
+
+    await invalidateCache('lnf:batches:all');
 
     res.status(201).json({
       success: true,
@@ -80,6 +83,8 @@ export const updateBatch = asyncHandler(
       res.status(404).json({ message: 'Batch not found' });
       return;
     }
+
+    await invalidateCache('lnf:batches:all', `lnf:batches:id:id:${req.params.id}`);
 
     res.status(200).json({
       success: true,

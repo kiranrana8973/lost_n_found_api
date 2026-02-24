@@ -4,4 +4,3 @@ Import/seed all data:
 
 Delete all data:
   npm run seed:destroy
-

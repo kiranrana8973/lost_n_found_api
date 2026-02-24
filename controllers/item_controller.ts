@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import asyncHandler from '../middleware/async';
+import { invalidateCache } from '../middleware/cache';
 import Item from '../models/items_model';
 import path from 'path';
 import fs from 'fs';
@@ -22,6 +23,8 @@ export const createItem = asyncHandler(
       media,
       reportedBy,
     });
+
+    await invalidateCache('lnf:items:all:*');
 
     res.status(201).json({
       success: true,
@@ -133,6 +136,8 @@ export const updateItem = asyncHandler(
 
     await item.save();
 
+    await invalidateCache('lnf:items:all:*', `lnf:items:id:id:${req.params.id}`);
+
     res.status(200).json({
       success: true,
       data: item,
@@ -178,6 +183,12 @@ export const deleteItem = asyncHandler(
     }
 
     await Item.findByIdAndDelete(req.params.id);
+
+    await invalidateCache(
+      'lnf:items:all:*',
+      `lnf:items:id:id:${req.params.id}`,
+      `lnf:comments:item:itemId:${req.params.id}:*`
+    );
 
     res.status(200).json({
       success: true,

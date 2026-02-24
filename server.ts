@@ -10,6 +10,7 @@ import rateLimit from 'express-rate-limit';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import errorHandler from './middleware/errorHandler';
+import connectRedis from './config/redis';
 
 // Import routes
 import batchRoutes from './routes/batch_route';
@@ -26,6 +27,9 @@ dotenv.config({ path: './config/config.env' });
 
 // Connect to the database
 connectDB();
+
+// Connect to Redis (non-blocking, app works without it)
+connectRedis();
 
 // Rate limiting
 const limiter = rateLimit({

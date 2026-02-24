@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction, CookieOptions } from 'express';
 import crypto from 'crypto';
 import asyncHandler from '../middleware/async';
+import { invalidateCache } from '../middleware/cache';
 import Student, { IStudent } from '../models/student_model';
 import Batch from '../models/batch_model';
 import RefreshToken from '../models/refresh_token_model';
@@ -63,6 +64,8 @@ export const createStudent = asyncHandler(
     // Remove password from response
     const studentResponse = student.toObject() as unknown as Record<string, unknown>;
     delete studentResponse.password;
+
+    await invalidateCache('lnf:students:*');
 
     res.status(201).json({
       success: true,
@@ -172,6 +175,8 @@ export const updateStudent = asyncHandler(
 
     await student.save();
 
+    await invalidateCache('lnf:students:*');
+
     res.status(200).json({
       success: true,
       data: student,
@@ -215,6 +220,8 @@ export const deleteStudent = asyncHandler(
     }
 
     await Student.findByIdAndDelete(req.params.id);
+
+    await invalidateCache('lnf:students:*');
 
     res.status(200).json({
       success: true,
