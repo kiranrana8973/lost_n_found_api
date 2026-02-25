@@ -28,5 +28,8 @@ public/item_videos/*
 *.log
 npm-debug.log*
 
+# Client build
+client/dist/
+
 # Misc
 coverage/

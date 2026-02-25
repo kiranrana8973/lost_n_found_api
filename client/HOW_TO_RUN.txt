@@ -1,0 +1,25 @@
+Lost & Found - Frontend Setup
+=============================
+
+Prerequisites:
+- Node.js (v18+)
+- Backend server running on port 3000
+
+Install dependencies:
+  cd client
+  npm install
+
+Run development server (port 3001):
+  npm run dev
+
+Build for production:
+  npm run build
+
+Preview production build:
+  npm run preview
+
+Running both backend and frontend:
+  Terminal 1 (Backend):  npm run start:dev
+  Terminal 2 (Frontend): cd client && npm run dev
+
+Open in browser: http://localhost:3001
