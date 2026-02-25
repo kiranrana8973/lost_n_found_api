@@ -1,0 +1,8 @@
+Seed Data Commands
+==================
+
+Import seed data (8 batches, 10 categories, 13 students, 25 items, 30 comments):
+npm run seed
+
+Delete all seed data:
+npm run seed:destroy
