@@ -23,7 +23,6 @@ type Comment struct {
 	V              int             `bson:"__v,omitempty" json:"-"`
 }
 
-// CommentPopulated is used for responses with populated references.
 type CommentPopulated struct {
 	ID             bson.ObjectID `bson:"_id" json:"_id"`
 	Text           string        `bson:"text" json:"text"`

@@ -18,7 +18,6 @@ import (
 )
 
 func main() {
-	// Handle seed command: go run . seed / go run . seed --destroy
 	if len(os.Args) > 1 && os.Args[0] != "" {
 		switch os.Args[1] {
 		case "seed":
@@ -28,31 +27,25 @@ func main() {
 		}
 	}
 
-	// Load config
 	cfg := config.Load("./config/config.env")
 
-	// Setup logger
 	level := slog.LevelInfo
 	if cfg.Env == "development" {
 		level = slog.LevelDebug
 	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
 
-	// Connect to MongoDB
 	client, db := database.Connect(cfg.DatabaseURI)
 	defer database.Disconnect(client)
 
-	// Ensure indexes
 	if err := database.EnsureIndexes(context.Background(), db); err != nil {
 		slog.Error("failed to ensure indexes", "error", err)
 	}
 
-	// Ensure upload directories exist
 	for _, dir := range []string{"public/profile_pictures", "public/item_photos", "public/item_videos"} {
 		os.MkdirAll(dir, 0o755)
 	}
 
-	// Repositories
 	studentRepo := repository.NewStudentRepo(db)
 	batchRepo := repository.NewBatchRepo(db)
 	categoryRepo := repository.NewCategoryRepo(db)
@@ -60,7 +53,6 @@ func main() {
 	commentRepo := repository.NewCommentRepo(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepo(db)
 
-	// Services
 	authService := service.NewAuthService(cfg, studentRepo, refreshTokenRepo)
 	studentService := service.NewStudentService(studentRepo, batchRepo, authService)
 	batchService := service.NewBatchService(batchRepo)
@@ -68,7 +60,6 @@ func main() {
 	itemService := service.NewItemService(itemRepo)
 	commentService := service.NewCommentService(commentRepo, studentRepo, itemRepo)
 
-	// Handlers
 	handlers := &router.Handlers{
 		Student:  handler.NewStudentHandler(studentService, cfg.JWTCookieExpire),
 		Auth:     handler.NewAuthHandler(authService, cfg.JWTCookieExpire),
@@ -79,10 +70,8 @@ func main() {
 		Upload:   handler.NewUploadHandler(),
 	}
 
-	// Router
 	r := router.New(cfg, authService, handlers)
 
-	// Server
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      r,
@@ -91,7 +80,6 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Graceful shutdown
 	go func() {
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)

@@ -124,16 +124,13 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, rawRefreshToken st
 		return "", "", nil, apperror.Unauthorized("Refresh token expired")
 	}
 
-	// Delete old token (rotation)
 	_ = s.refreshTokenRepo.DeleteByToken(ctx, hashedToken)
 
-	// Get student
 	student, err = s.studentRepo.FindByID(ctx, rt.Student)
 	if err != nil {
 		return "", "", nil, apperror.Unauthorized("User not found")
 	}
 
-	// Generate new tokens
 	accessToken, err = s.GenerateAccessToken(student.ID)
 	if err != nil {
 		return "", "", nil, err

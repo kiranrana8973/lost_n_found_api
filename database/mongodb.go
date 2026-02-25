@@ -41,7 +41,6 @@ func Disconnect(client *mongo.Client) {
 }
 
 func EnsureIndexes(ctx context.Context, db *mongo.Database) error {
-	// Students indexes
 	students := db.Collection("students")
 	_, err := students.Indexes().CreateMany(ctx, []mongo.IndexModel{
 		{Keys: bson.D{{Key: "email", Value: 1}}, Options: options.Index().SetUnique(true)},
@@ -51,7 +50,6 @@ func EnsureIndexes(ctx context.Context, db *mongo.Database) error {
 		return fmt.Errorf("student indexes: %w", err)
 	}
 
-	// Batches indexes
 	batches := db.Collection("batches")
 	_, err = batches.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.D{{Key: "batchName", Value: 1}}, Options: options.Index().SetUnique(true),
@@ -60,7 +58,6 @@ func EnsureIndexes(ctx context.Context, db *mongo.Database) error {
 		return fmt.Errorf("batch indexes: %w", err)
 	}
 
-	// Categories indexes
 	categories := db.Collection("categories")
 	_, err = categories.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.D{{Key: "name", Value: 1}}, Options: options.Index().SetUnique(true),
@@ -69,7 +66,6 @@ func EnsureIndexes(ctx context.Context, db *mongo.Database) error {
 		return fmt.Errorf("category indexes: %w", err)
 	}
 
-	// Comments indexes
 	comments := db.Collection("comments")
 	_, err = comments.Indexes().CreateMany(ctx, []mongo.IndexModel{
 		{Keys: bson.D{{Key: "item", Value: 1}, {Key: "createdAt", Value: -1}}},
@@ -80,7 +76,6 @@ func EnsureIndexes(ctx context.Context, db *mongo.Database) error {
 		return fmt.Errorf("comment indexes: %w", err)
 	}
 
-	// Refresh tokens indexes
 	refreshTokens := db.Collection("refreshtokens")
 	_, err = refreshTokens.Indexes().CreateMany(ctx, []mongo.IndexModel{
 		{Keys: bson.D{{Key: "token", Value: 1}}},

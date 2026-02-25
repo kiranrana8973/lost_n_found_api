@@ -24,7 +24,6 @@ func NewStudentService(sr repository.StudentRepository, br repository.BatchRepos
 }
 
 func (s *StudentService) Create(ctx context.Context, student *model.Student) (*model.Student, error) {
-	// Verify batch exists
 	_, err := s.batchRepo.FindByID(ctx, student.BatchID)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -33,7 +32,6 @@ func (s *StudentService) Create(ctx context.Context, student *model.Student) (*m
 		return nil, err
 	}
 
-	// Check email uniqueness
 	existing, err := s.studentRepo.FindByEmail(ctx, strings.ToLower(student.Email))
 	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
 		return nil, err
@@ -42,7 +40,6 @@ func (s *StudentService) Create(ctx context.Context, student *model.Student) (*m
 		return nil, apperror.DuplicateKey("email")
 	}
 
-	// Check username uniqueness (case-insensitive)
 	existing, err = s.studentRepo.FindByUsernameCaseInsensitive(ctx, student.Username)
 	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
 		return nil, err
@@ -51,7 +48,6 @@ func (s *StudentService) Create(ctx context.Context, student *model.Student) (*m
 		return nil, apperror.DuplicateKey("username")
 	}
 
-	// Hash password
 	hashed, err := s.authService.HashPassword(student.Password)
 	if err != nil {
 		return nil, err
@@ -71,7 +67,6 @@ func (s *StudentService) Create(ctx context.Context, student *model.Student) (*m
 		return nil, err
 	}
 
-	// Clear password from response
 	created.Password = ""
 	return created, nil
 }
@@ -133,7 +128,6 @@ func (s *StudentService) Update(ctx context.Context, id bson.ObjectID, requestor
 		return nil, apperror.Forbidden("You can only update your own profile")
 	}
 
-	// If password is being updated, hash it
 	for i, elem := range update {
 		if elem.Key == "password" {
 			hashed, err := s.authService.HashPassword(elem.Value.(string))

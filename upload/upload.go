@@ -63,7 +63,6 @@ func handleUpload(r *http.Request, fieldName, destDir, prefix string, allowedExt
 		return nil, apperror.BadRequest("Invalid file type. Allowed: " + strings.Join(allowed, ", "))
 	}
 
-	// Ensure destination directory exists
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create upload directory: %w", err)
 	}
@@ -81,7 +80,6 @@ func handleUpload(r *http.Request, fieldName, destDir, prefix string, allowedExt
 		return nil, fmt.Errorf("failed to save file: %w", err)
 	}
 
-	// Return relative path from public/
 	relPath := strings.TrimPrefix(destDir, "public/") + "/" + filename
 
 	return &UploadResult{

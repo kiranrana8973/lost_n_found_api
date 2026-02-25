@@ -25,7 +25,6 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	_ = decodeJSON(r, &input)
 
 	rawToken := input.RefreshToken
-	// Also try Authorization header
 	if rawToken == "" {
 		authHeader := r.Header.Get("Authorization")
 		if strings.HasPrefix(authHeader, "Bearer ") {
@@ -44,7 +43,6 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    accessToken,

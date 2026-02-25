@@ -40,3 +40,7 @@ public/item_videos/*
 
 # Debug
 __debug_bin*
+
+# Claude
+.claude/
+CLAUDE.md

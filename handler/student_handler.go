@@ -81,7 +81,6 @@ func (h *StudentHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    result.AccessToken,
@@ -108,7 +107,6 @@ func (h *StudentHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = decodeJSON(r, &input)
 
-	// Clear cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    "",
@@ -234,7 +232,6 @@ func (h *StudentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get student to check profile picture before deleting
 	student, err := h.studentService.GetStudentByID(r.Context(), id)
 	if err == nil && student.ProfilePicture != "" && student.ProfilePicture != "default-profile.png" {
 		_ = removeFile("public/profile_pictures/" + student.ProfilePicture)

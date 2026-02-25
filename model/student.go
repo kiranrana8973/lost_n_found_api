@@ -20,7 +20,6 @@ type Student struct {
 	V              int           `bson:"__v,omitempty" json:"-"`
 }
 
-// StudentResponse is used when returning student data without password.
 type StudentResponse struct {
 	ID             bson.ObjectID `json:"_id"`
 	Name           string        `json:"name"`

@@ -31,20 +31,14 @@ func Sanitize(next http.Handler) http.Handler {
 }
 
 func sanitizeBody(body string) string {
-	// Simple sanitization: escape < > and remove $ for NoSQL injection prevention
-	// Skip this for fields that should not be sanitized
 	result := body
 	result = strings.ReplaceAll(result, "<", "&lt;")
 	result = strings.ReplaceAll(result, ">", "&gt;")
-	// Remove $ to prevent NoSQL injection (but not inside quoted strings that are skip fields)
-	// For simplicity, remove standalone $ patterns outside of known safe fields
 	result = removeDollarSigns(result)
 	return result
 }
 
 func removeDollarSigns(s string) string {
-	// Simple approach: remove $ that appears as first char of a JSON key or value
-	// This prevents { "$gt": ... } style injection
 	var result strings.Builder
 	inString := false
 	escaped := false
@@ -67,7 +61,6 @@ func removeDollarSigns(s string) string {
 			continue
 		}
 		if ch == '$' && inString {
-			// Check if this is inside a skip field value - for simplicity, just skip $
 			continue
 		}
 		result.WriteByte(ch)

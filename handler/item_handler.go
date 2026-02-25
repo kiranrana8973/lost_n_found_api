@@ -182,7 +182,6 @@ func (h *ItemHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete media file
 	if item.Media != "" {
 		_ = upload.DeleteFile(item.Media)
 	}

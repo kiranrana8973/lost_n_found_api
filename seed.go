@@ -21,7 +21,6 @@ func runSeed() {
 
 	ctx := context.Background()
 
-	// Check for --destroy flag
 	if len(os.Args) > 1 && os.Args[1] == "--destroy" {
 		destroySeed(ctx, db)
 		return
@@ -46,7 +45,6 @@ func destroySeed(ctx context.Context, db *mongo.Database) {
 func seedData(ctx context.Context, db *mongo.Database) {
 	now := time.Now()
 
-	// --- Batches ---
 	batchNames := []string{"35-A", "35-B", "35-C", "35-D", "36-A", "36-B", "36-C", "36-D"}
 	batchIDs := make([]bson.ObjectID, len(batchNames))
 	var batchDocs []interface{}
@@ -63,7 +61,6 @@ func seedData(ctx context.Context, db *mongo.Database) {
 	insertMany(ctx, db, "batches", batchDocs)
 	slog.Info("seeded batches", "count", len(batchDocs))
 
-	// --- Categories ---
 	type cat struct {
 		name string
 		desc string
@@ -96,7 +93,6 @@ func seedData(ctx context.Context, db *mongo.Database) {
 	insertMany(ctx, db, "categories", catDocs)
 	slog.Info("seeded categories", "count", len(catDocs))
 
-	// --- Students ---
 	type stu struct {
 		name, email, username, phone string
 	}
@@ -137,7 +133,6 @@ func seedData(ctx context.Context, db *mongo.Database) {
 	insertMany(ctx, db, "students", stuDocs)
 	slog.Info("seeded students", "count", len(stuDocs))
 
-	// --- Items ---
 	type itm struct {
 		name, desc, typ, location, status string
 		catIdx                            int
@@ -198,7 +193,6 @@ func seedData(ctx context.Context, db *mongo.Database) {
 	insertMany(ctx, db, "items", itemDocs)
 	slog.Info("seeded items", "count", len(itemDocs))
 
-	// --- Comments ---
 	commentTexts := []string{
 		"I think I saw this near the library yesterday around 4pm. Did you check with the lost and found office?",
 		"This looks like mine! Can you provide more details about where exactly you found it?",

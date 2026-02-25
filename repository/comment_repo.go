@@ -133,7 +133,6 @@ func (r *commentRepo) FindByItemPopulated(ctx context.Context, itemID bson.Objec
 	}
 	pipeline = append(pipeline, commentPopulatePipeline()...)
 
-	// Add reply count lookup
 	if !includeReplies {
 		pipeline = append(pipeline, bson.D{{Key: "$lookup", Value: bson.D{
 			{Key: "from", Value: "comments"},
@@ -204,7 +203,6 @@ func (r *commentRepo) FindByStudentPopulated(ctx context.Context, studentID bson
 		{{Key: "$limit", Value: int64(limit)}},
 	}
 	pipeline = append(pipeline, commentPopulatePipeline()...)
-	// Also lookup item
 	pipeline = append(pipeline, bson.D{{Key: "$lookup", Value: bson.D{
 		{Key: "from", Value: "items"},
 		{Key: "localField", Value: "item"},
@@ -249,7 +247,6 @@ func (r *commentRepo) FindMentionsPopulated(ctx context.Context, studentID bson.
 		{{Key: "$limit", Value: int64(limit)}},
 	}
 	pipeline = append(pipeline, commentPopulatePipeline()...)
-	// Also lookup item
 	pipeline = append(pipeline, bson.D{{Key: "$lookup", Value: bson.D{
 		{Key: "from", Value: "items"},
 		{Key: "localField", Value: "item"},

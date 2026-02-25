@@ -46,7 +46,6 @@ func (r *itemRepo) FindByID(ctx context.Context, id bson.ObjectID) (*model.Item,
 
 func populateItemPipeline() mongo.Pipeline {
 	return mongo.Pipeline{
-		// Lookup reportedBy
 		{{Key: "$lookup", Value: bson.D{
 			{Key: "from", Value: "students"},
 			{Key: "localField", Value: "reportedBy"},
@@ -63,7 +62,6 @@ func populateItemPipeline() mongo.Pipeline {
 			{Key: "path", Value: "$reportedByData"},
 			{Key: "preserveNullAndEmptyArrays", Value: true},
 		}}},
-		// Lookup claimedBy
 		{{Key: "$lookup", Value: bson.D{
 			{Key: "from", Value: "students"},
 			{Key: "localField", Value: "claimedBy"},
@@ -74,7 +72,6 @@ func populateItemPipeline() mongo.Pipeline {
 			{Key: "path", Value: "$claimedByData"},
 			{Key: "preserveNullAndEmptyArrays", Value: true},
 		}}},
-		// Lookup category
 		{{Key: "$lookup", Value: bson.D{
 			{Key: "from", Value: "categories"},
 			{Key: "localField", Value: "category"},
@@ -105,7 +102,6 @@ func (r *itemRepo) FindByIDPopulated(ctx context.Context, id bson.ObjectID) (bso
 }
 
 func (r *itemRepo) FindAllPopulated(ctx context.Context, filter bson.D, page, limit int) ([]bson.Raw, int64, error) {
-	// Count total matching documents
 	total, err := r.col.CountDocuments(ctx, filter)
 	if err != nil {
 		return nil, 0, err

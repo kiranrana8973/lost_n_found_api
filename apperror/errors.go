@@ -36,7 +36,6 @@ func HandleError(w http.ResponseWriter, err error) {
 		return
 	}
 
-	// MongoDB duplicate key error
 	if mongo.IsDuplicateKeyError(err) {
 		field := extractDuplicateField(err.Error())
 		writeJSON(w, http.StatusBadRequest, map[string]any{
@@ -46,7 +45,6 @@ func HandleError(w http.ResponseWriter, err error) {
 		return
 	}
 
-	// MongoDB no documents
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		writeJSON(w, http.StatusNotFound, map[string]any{
 			"success": false,
@@ -55,7 +53,6 @@ func HandleError(w http.ResponseWriter, err error) {
 		return
 	}
 
-	// Default internal server error
 	slog.Error("unhandled error", "error", err)
 	writeJSON(w, http.StatusInternalServerError, map[string]any{
 		"success": false,
@@ -64,12 +61,10 @@ func HandleError(w http.ResponseWriter, err error) {
 }
 
 func extractDuplicateField(msg string) string {
-	// MongoDB duplicate key error contains the index name like "email_1"
 	if idx := strings.Index(msg, "index:"); idx != -1 {
 		part := msg[idx+7:]
 		if end := strings.Index(part, "_1"); end != -1 {
 			field := strings.TrimSpace(part[:end])
-			// Get just the last part after any space
 			parts := strings.Fields(field)
 			if len(parts) > 0 {
 				return parts[len(parts)-1]

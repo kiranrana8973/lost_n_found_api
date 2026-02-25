@@ -27,7 +27,6 @@ type Handlers struct {
 func New(cfg *config.Config, authService *service.AuthService, h *Handlers) http.Handler {
 	r := chi.NewRouter()
 
-	// Global middleware
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.RealIP)
 	r.Use(middleware.Recovery)
@@ -35,7 +34,6 @@ func New(cfg *config.Config, authService *service.AuthService, h *Handlers) http
 	r.Use(middleware.Sanitize)
 	r.Use(middleware.SecurityHeaders)
 
-	// CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   cfg.CORSOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -46,20 +44,16 @@ func New(cfg *config.Config, authService *service.AuthService, h *Handlers) http
 	})
 	r.Use(c.Handler)
 
-	// General rate limiter: 100 requests per 15 minutes
 	r.Use(httprate.LimitByIP(100, 15*time.Minute))
 
-	// Static files
 	fileServer := http.FileServer(http.Dir("./public"))
 	r.Handle("/public/*", http.StripPrefix("/public", fileServer))
 
-	// Auth rate limiter: 5 requests per 15 minutes
 	authLimiter := httprate.LimitByIP(5, 15*time.Minute)
 	protect := middleware.Protect(authService)
 
 	r.Route("/api/v1", func(r chi.Router) {
 
-		// Students
 		r.Route("/students", func(r chi.Router) {
 			r.Post("/", h.Student.Create)
 			r.With(authLimiter).Post("/login", h.Student.Login)
@@ -72,10 +66,8 @@ func New(cfg *config.Config, authService *service.AuthService, h *Handlers) http
 			r.With(protect).Delete("/{id}", h.Student.Delete)
 		})
 
-		// Auth
 		r.With(authLimiter).Post("/auth/refresh", h.Auth.RefreshToken)
 
-		// Batches
 		r.Route("/batches", func(r chi.Router) {
 			r.Get("/", h.Batch.GetAll)
 			r.Get("/{id}", h.Batch.GetByID)
@@ -83,7 +75,6 @@ func New(cfg *config.Config, authService *service.AuthService, h *Handlers) http
 			r.With(protect).Put("/{id}", h.Batch.Update)
 		})
 
-		// Categories
 		r.Route("/categories", func(r chi.Router) {
 			r.Get("/", h.Category.GetAll)
 			r.Get("/{id}", h.Category.GetByID)
@@ -92,7 +83,6 @@ func New(cfg *config.Config, authService *service.AuthService, h *Handlers) http
 			r.With(protect).Delete("/{id}", h.Category.Delete)
 		})
 
-		// Items
 		r.Route("/items", func(r chi.Router) {
 			r.Get("/", h.Item.GetAll)
 			r.Get("/{id}", h.Item.GetByID)
@@ -103,7 +93,6 @@ func New(cfg *config.Config, authService *service.AuthService, h *Handlers) http
 			r.With(protect).Post("/upload-video", h.Item.UploadVideo)
 		})
 
-		// Comments
 		r.Route("/comments", func(r chi.Router) {
 			r.Get("/item/{itemId}", h.Comment.GetByItem)
 			r.Get("/{commentId}/replies", h.Comment.GetReplies)

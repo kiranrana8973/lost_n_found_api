@@ -24,7 +24,6 @@ type Item struct {
 	V           int            `bson:"__v,omitempty" json:"-"`
 }
 
-// ItemPopulated is used for responses with populated references.
 type ItemPopulated struct {
 	ID          bson.ObjectID `bson:"_id" json:"_id"`
 	ItemName    string        `bson:"itemName" json:"itemName"`

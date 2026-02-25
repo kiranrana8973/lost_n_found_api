@@ -36,7 +36,6 @@ func extractMentions(text string) []string {
 }
 
 func (s *CommentService) Create(ctx context.Context, text string, itemID, commentedBy bson.ObjectID, parentCommentID *bson.ObjectID) (bson.Raw, error) {
-	// Validate item exists
 	_, err := s.itemRepo.FindByID(ctx, itemID)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -45,7 +44,6 @@ func (s *CommentService) Create(ctx context.Context, text string, itemID, commen
 		return nil, err
 	}
 
-	// Validate student exists
 	_, err = s.studentRepo.FindByID(ctx, commentedBy)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -54,7 +52,6 @@ func (s *CommentService) Create(ctx context.Context, text string, itemID, commen
 		return nil, err
 	}
 
-	// If reply, validate parent comment exists
 	isReply := false
 	if parentCommentID != nil {
 		parent, err := s.commentRepo.FindByID(ctx, *parentCommentID)
@@ -68,7 +65,6 @@ func (s *CommentService) Create(ctx context.Context, text string, itemID, commen
 		isReply = true
 	}
 
-	// Extract mentions
 	usernames := extractMentions(text)
 	var mentionedUserIDs []bson.ObjectID
 	if len(usernames) > 0 {
@@ -134,7 +130,6 @@ func (s *CommentService) Update(ctx context.Context, id bson.ObjectID, requestor
 		return nil, apperror.Forbidden("You can only update your own comments")
 	}
 
-	// Re-extract mentions
 	usernames := extractMentions(text)
 	var mentionedUserIDs []bson.ObjectID
 	if len(usernames) > 0 {
@@ -179,7 +174,6 @@ func (s *CommentService) Delete(ctx context.Context, id bson.ObjectID, requestor
 		return apperror.Forbidden("You can only delete your own comments")
 	}
 
-	// If parent comment, delete all replies
 	if !comment.IsReply {
 		if err := s.commentRepo.DeleteReplies(ctx, id); err != nil {
 			return err
@@ -204,7 +198,6 @@ func (s *CommentService) ToggleLike(ctx context.Context, id bson.ObjectID, stude
 		return nil, err
 	}
 
-	// Check if already liked
 	alreadyLiked := false
 	for _, likeID := range comment.Likes {
 		if likeID == studentID {
@@ -223,7 +216,6 @@ func (s *CommentService) ToggleLike(ctx context.Context, id bson.ObjectID, stude
 		}
 	}
 
-	// Get updated comment
 	populated, err := s.commentRepo.FindByIDPopulated(ctx, id)
 	if err != nil {
 		return nil, err
