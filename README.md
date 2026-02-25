@@ -1,8 +1,132 @@
-# Lost & Found API
+# Lost & Found API (Go)
 
-A Lost and Found REST API built with **TypeScript**, Express.js, and MongoDB for mobile and web applications.
+A Lost and Found REST API built with **Go**, Chi router, and MongoDB for mobile and web applications.
 
 **This project is solely for college project purposes only.**
+
+---
+
+## Tech Stack
+
+- **Go 1.22+**
+- Chi v5 (HTTP Router)
+- MongoDB (Official Go Driver v2)
+- JWT (golang-jwt)
+- Bcrypt (golang.org/x/crypto)
+- CORS (rs/cors)
+- Rate Limiting (go-chi/httprate)
+
+---
+
+## Project Structure
+
+```
+lost_n_found_api/
+├── main.go                # Entry point with graceful shutdown
+├── config/
+│   ├── config.go          # Environment config loader
+│   └── config.env         # Environment variables
+├── database/
+│   └── mongodb.go         # MongoDB connection + index setup
+├── model/                 # Data models
+│   ├── student.go
+│   ├── batch.go
+│   ├── category.go
+│   ├── item.go
+│   ├── comment.go
+│   └── refresh_token.go
+├── repository/            # Database access layer (interfaces + MongoDB)
+│   ├── student_repo.go
+│   ├── batch_repo.go
+│   ├── category_repo.go
+│   ├── item_repo.go
+│   ├── comment_repo.go
+│   └── refresh_token_repo.go
+├── service/               # Business logic
+│   ├── auth_service.go
+│   ├── student_service.go
+│   ├── batch_service.go
+│   ├── category_service.go
+│   ├── item_service.go
+│   └── comment_service.go
+├── handler/               # HTTP handlers
+│   ├── response.go
+│   ├── student_handler.go
+│   ├── auth_handler.go
+│   ├── batch_handler.go
+│   ├── category_handler.go
+│   ├── item_handler.go
+│   ├── comment_handler.go
+│   └── upload_handler.go
+├── middleware/             # HTTP middleware
+│   ├── auth.go
+│   ├── logging.go
+│   ├── sanitize.go
+│   ├── recovery.go
+│   └── security.go
+├── upload/
+│   └── upload.go          # File upload handling
+├── apperror/
+│   └── errors.go          # Custom error types
+├── router/
+│   └── router.go          # Chi router with all routes
+├── public/                # Static file serving
+│   ├── profile_pictures/
+│   ├── item_photos/
+│   └── item_videos/
+├── go.mod
+├── go.sum
+└── Makefile
+```
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Go 1.22+
+- MongoDB running on `localhost:27017`
+
+### Run
+
+```bash
+# Start development server
+make dev
+
+# Or manually
+go run .
+```
+
+### Build
+
+```bash
+# Build binary
+make build
+
+# Run binary
+make run
+
+# Clean build artifacts
+make clean
+```
+
+### Environment Configuration
+
+Edit `config/config.env`:
+
+```env
+ENV=development
+PORT=3000
+DATABASE_URI=mongodb://127.0.0.1:27017/lost_n_found
+FILE_UPLOAD_PATH=./public/
+MAX_FILE_UPLOAD=10000000
+JWT_SECRET=your_secret_key
+JWT_EXPIRE=15m
+JWT_COOKIE_EXPIRE=1
+REFRESH_TOKEN_EXPIRE_DAYS=7
+CORS_ORIGIN=http://localhost:3000,http://localhost:3001
+```
 
 ---
 
@@ -209,21 +333,6 @@ Authorization: Bearer <token>
 }
 ```
 
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "64abc123...",
-    "name": "Electronics",
-    "description": "Phones, laptops, chargers, earbuds, etc.",
-    "status": "active",
-    "createdAt": "2025-12-20T10:00:00.000Z"
-  }
-}
-```
-
 ---
 
 ### Student Endpoints
@@ -232,6 +341,7 @@ Authorization: Bearer <token>
 | ------ | ------------------ | ---------------------- | ---- |
 | POST   | `/students`        | Register               | No   |
 | POST   | `/students/login`  | Login                  | No   |
+| POST   | `/students/logout` | Logout                 | No   |
 | GET    | `/students`        | Get all students       | Yes  |
 | GET    | `/students/:id`    | Get single student     | No   |
 | PUT    | `/students/:id`    | Update profile         | Yes  |
@@ -271,7 +381,27 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "a1b2c3d4e5f6...",
+    "data": {
+      "_id": "64abc123...",
+      "name": "Kiran Rana",
+      "email": "kiran@softwarica.edu.np",
+      "username": "kiranr"
+    }
+  }
+}
+```
+
+### Token Refresh
+
+```http
+POST /api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "a1b2c3d4e5f6..."
 }
 ```
 
@@ -302,22 +432,7 @@ Authorization: Bearer <token>
   "type": "lost",
   "category": "64abc456...",
   "location": "Library, Ground Floor",
-  "media": "photo.jpg",
-  "reportedBy": "64abc123..."
-}
-```
-
-**Update Item (Mark as Claimed):**
-
-```http
-PUT /api/v1/items/:id
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "status": "claimed",
-  "claimedBy": "64abc123...",
-  "isClaimed": true
+  "media": "photo.jpg"
 }
 ```
 
@@ -384,62 +499,6 @@ Authorization: Bearer <token>
 }
 ```
 
-**Pagination:**
-
-```http
-GET /api/v1/comments/item/:itemId?page=1&limit=10&includeReplies=true
-```
-
----
-
-## Quick Start
-
-```bash
-# Install dependencies
-npm install
-
-# Configure environment
-# Create config/config.env with:
-# NODE_ENV=development
-# PORT=3000
-# LOCAL_DATABASE_URI=mongodb://127.0.0.1:27017/lost_n_found
-# JWT_SECRET=your_secret_key
-# JWT_EXPIRE=30d
-
-# Start development server (with hot reload)
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-```
-
----
-
-## Seed Data
-
-Populate the database with sample data for testing:
-
-```bash
-# Add seed data (batches, categories, students, items, comments)
-npm run seed
-
-# Delete all seed data
-npm run seed:destroy
-```
-
-**Test Credentials (after seeding):**
-
-| Email                           | Password    |
-| ------------------------------- | ----------- |
-| kiranrana@softwarica.edu.np     | password123 |
-| sarah.johnson@softwarica.edu.np | password123 |
-| michael.chen@softwarica.edu.np  | password123 |
-
-All seeded accounts use password: `password123`
-
 ---
 
 ## Response Format
@@ -464,27 +523,17 @@ All seeded accounts use password: `password123`
 
 ---
 
-## Tech Stack
-
-- **TypeScript** - Strongly typed JavaScript
-- Node.js
-- Express.js v5
-- MongoDB (Mongoose)
-- JWT (Authentication)
-- Multer (File Uploads)
-- Helmet, XSS-Clean, Rate Limiting (Security)
-
----
-
 ## Security Features
 
-- Password hashing with bcrypt
-- JWT-based authentication
-- Rate limiting (100 requests/15min, 5 login attempts)
-- XSS attack prevention
-- NoSQL injection prevention
-- CORS configuration
-- Helmet security headers
+- Password hashing with bcrypt (cost factor 10)
+- JWT access tokens (15min expiry) + refresh token rotation (7 days)
+- Rate limiting (100 requests/15min general, 5 login attempts/15min)
+- XSS prevention (HTML escaping)
+- NoSQL injection prevention ($ removal)
+- CORS configuration with allowed origins
+- Security headers (equivalent to Helmet)
+- HTTP-only cookies for tokens
+- Graceful server shutdown
 
 ---
 

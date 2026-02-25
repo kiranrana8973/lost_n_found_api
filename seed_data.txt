@@ -1,7 +1,43 @@
+===============================================
+  LOST & FOUND API - Seed Data Commands
+===============================================
 
-Import/seed all data:
-  npm run seed
+Populate Database:
+  make seed
+    or
+  go run . seed
 
-Delete all data:
-  npm run seed:destroy
+Clear All Data:
+  make seed-destroy
+    or
+  go run . seed --destroy
 
+
+TEST CREDENTIALS (after seeding)
+---------------------------------
+All passwords: password123
+
+  Email                               Username
+  ---------------------------------   -----------
+  kiranrana@softwarica.edu.np         kiranr
+  sarah.johnson@softwarica.edu.np     sarahj
+  michael.chen@softwarica.edu.np      mikechen
+  emily.rodriguez@softwarica.edu.np   emilyrod
+  james.wilson@softwarica.edu.np      jameswilson
+  priya.patel@softwarica.edu.np       priyap
+  david.kim@softwarica.edu.np         davidkim
+  olivia.martinez@softwarica.edu.np   oliviam
+  ryan.thompson@softwarica.edu.np     ryant
+  sophia.lee@softwarica.edu.np        sophialee
+  alex.garcia@softwarica.edu.np       alexg
+  emma.brown@softwarica.edu.np        emmab
+  daniel.singh@softwarica.edu.np      daniels
+
+
+SEEDED DATA SUMMARY
+--------------------
+  8  Batches      (35-A, 35-B, 35-C, 35-D, 36-A, 36-B, 36-C, 36-D)
+  10 Categories   (Electronics, Bags & Accessories, Clothing, etc.)
+  13 Students     (assigned to batches cyclically)
+  25 Items        (mix of lost/found, various statuses)
+  30 Comments     (distributed across items, with @mentions)

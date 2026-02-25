@@ -1,45 +1,42 @@
-# Dependencies
-node_modules/
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 
-# Environment variables
-# .env
-# config/config.env
+# Build output
+*.o
+*.a
+*.test
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# OS Files
-.DS_Store
-Thumbs.db
+# Go workspace
+go.work
+go.work.sum
 
 # IDE
-.vscode/
 .idea/
-.claude/
+.vscode/
 *.swp
 *.swo
 *~
 
-# Uploaded files (except defaults)
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment (keep config.env but ignore overrides)
+.env
+*.env.local
+
+# Upload directories (keep structure, ignore uploads)
 public/profile_pictures/*
-!public/profile_pictures/default-profile.png
 public/item_photos/*
-!public/item_photos/default.jpg
 public/item_videos/*
+!public/profile_pictures/.gitkeep
+!public/item_photos/.gitkeep
+!public/item_videos/.gitkeep
 
-# Testing
-coverage/
-
-# Documentation (exclude internal notes)
-TEACHING_NOTES.md
-FINAL_REVIEW.md
-db_design.md
-API_TESTING.md
-
-# Build output
-dist/
-
-# Misc
-*.log
+# Debug
+__debug_bin*

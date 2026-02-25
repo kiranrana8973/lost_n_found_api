@@ -4,52 +4,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Run Commands
 
-- `npm run dev` — Start dev server with hot reload (ts-node-dev)
-- `npm run build` — Compile TypeScript to `dist/`
-- `npm start` — Start production server from `dist/`
-- `npm test` — Run API tests (ts-node test-api.ts)
-- `npm run seed` — Populate database with sample data
-- `npm run seed:destroy` — Delete all seed data
+- `make dev` — Start development server (`go run .`)
+- `make build` — Compile binary to `bin/server`
+- `make run` — Build and run binary
+- `make clean` — Remove build artifacts
+- `go build ./...` — Verify all packages compile
+- `go mod tidy` — Sync dependencies
 
 ## Architecture
 
-Express 5 REST API with TypeScript, MongoDB/Mongoose, and JWT authentication. Follows MVC pattern:
+Go REST API using Chi router, MongoDB official Go driver v2, and JWT authentication. Follows layered architecture: Handler → Service → Repository.
 
-- **server.ts** — App entry point. Configures middleware (helmet, CORS, rate limiting, custom sanitization), mounts routes, serves static files from `public/`.
-- **models/** — Mongoose schemas with TypeScript interfaces (`IStudent`, `IItem`, `IComment`, etc.). Each model exports both the interface and the Mongoose model.
-- **controllers/** — Async route handlers wrapped with `asyncHandler` middleware. Return JSON responses with `{ success, data }` shape.
-- **routes/** — Express routers mapping HTTP methods to controller functions. Protected routes use `protect` middleware.
-- **middleware/** — `auth.ts` (JWT protect/authorize), `async.ts` (error catching wrapper), `errorHandler.ts` (global error handler), `uploads.ts` (multer config).
-- **types/express.d.ts** — Extends Express `Request` with `user?: IStudent`.
+- **main.go** — Entry point. Loads config, connects MongoDB, wires dependencies, starts HTTP server with graceful shutdown.
+- **config/** — `config.go` loads env vars from `config/config.env` using godotenv. `Config` struct holds all settings.
+- **database/** — MongoDB connection (`Connect`/`Disconnect`) and `EnsureIndexes` for all collections.
+- **model/** — Go structs with `bson` and `json` tags mapping to MongoDB collections.
+- **repository/** — Interfaces + MongoDB implementations. Uses `$lookup` aggregation pipelines for populated queries.
+- **service/** — Business logic. `AuthService` handles JWT, bcrypt, refresh tokens. Other services handle CRUD with authorization.
+- **handler/** — HTTP handlers. Parse request, call service, write JSON. `response.go` has shared helpers.
+- **middleware/** — `auth.go` (JWT protect/authorize), `logging.go`, `sanitize.go`, `recovery.go`, `security.go`.
+- **upload/** — File upload handling using Go stdlib multipart parsing.
+- **apperror/** — Custom `AppError` type with centralized error handler.
+- **router/** — Chi router setup with all routes and middleware.
 
 ## Key Patterns
 
-**Authentication:** JWT via `Authorization: Bearer <token>` header. `protect` middleware verifies token and attaches `req.user`. Login also sets httpOnly cookie. Auth routes have a stricter rate limit (5 attempts/15min).
+**Authentication:** JWT via `Authorization: Bearer <token>` header. `middleware.Protect` verifies token and attaches `*model.Student` to context. Retrieve with `middleware.GetUser(ctx)`. Auth routes have stricter rate limit (5/15min).
 
-**File uploads:** Multer stores files in `public/` subdirectories:
-- `profile_pictures/` (prefix: `pro-pic`, max 2MB, images only)
-- `item_photos/` (prefix: `itm-pic`, max 2MB, images only)
-- `item_videos/` (prefix: `item-vid`, max 50MB, videos only)
+**File uploads:** Go stdlib `r.FormFile()` with validation in `upload/`:
 
-Upload endpoints return the relative path (e.g., `item_photos/itm-pic-123.jpg`) which is served as a static file.
+- `profile_pictures/` (prefix: `pro-pic`, max 2MB, images)
+- `item_photos/` (prefix: `itm-pic`, max 2MB, images)
+- `item_videos/` (prefix: `item-vid`, max 50MB, videos)
 
-**Authorization:** Owner-only checks in update/delete controllers compare `req.user._id` against the resource's owner field (`reportedBy` for items, `commentedBy` for comments).
+**Authorization:** Owner-only checks in services compare `requestorID` against resource owner.
 
-**Comments:** Support `@username` mentions (extracted via regex, resolved to user IDs), nested replies via `parentComment`, and like/unlike toggling. Deleting a parent comment cascades to its replies.
+**Pagination:** `page` and `limit` query params (defaults: 1, 10). Items also filter by `type`, `status`, `category`.
 
-**Pagination:** Item and comment list endpoints support `page` and `limit` query params (defaults: page 1, limit 10). Items also filter by `type`, `status`, `category`.
-
-**Error handling:** `asyncHandler` wraps all controllers. `errorHandler` middleware handles Mongoose validation/cast/duplicate key errors and JWT errors with appropriate status codes.
+**Error handling:** `apperror.HandleError` maps app errors and MongoDB errors to HTTP status codes. `middleware.Recovery` catches panics.
 
 ## Environment
 
-Config loaded from `config/config.env`. Key variables: `LOCAL_DATABASE_URI`, `JWT_SECRET`, `JWT_EXPIRE`, `PORT`, `CORS_ORIGIN` (comma-separated origins), `MAX_FILE_UPLOAD`.
+Config loaded from `config/config.env`. Key variables: `DATABASE_URI`, `JWT_SECRET`, `JWT_EXPIRE`, `PORT`, `CORS_ORIGIN`.
 
-## TypeScript
-
-Strict mode enabled. Target ES2020, CommonJS modules. Output to `dist/`. Custom type roots in `./types/`.
-
-## Test Credentials (after seeding)
+## Test Credentials (with seeded data from TypeScript version)
 
 - `kiranrana@softwarica.edu.np` / `password123`
 - `sarah.johnson@softwarica.edu.np` / `password123`

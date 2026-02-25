@@ -1,50 +1,52 @@
 ===============================================
-  LOST & FOUND API - Installation & Running
+  LOST & FOUND API (Go) - Installation & Running
 ===============================================
 
-This is a TypeScript project.
+This is a Go project.
 
 PREREQUISITES
 -------------
-- Node.js (v18 or higher)
+- Go (v1.22 or higher)
 - MongoDB (local or cloud instance)
-- npm (comes with Node.js)
 
 
 STEP 1: Install Dependencies
 ----------------------------
-npm install
+go mod tidy
 
 
 STEP 2: Configure Environment
 -----------------------------
-Create a .env file or config/config.env with your environment variables:
-- MongoDB connection string
-- JWT secret
-- Port number
+Edit config/config.env with your environment variables:
+- DATABASE_URI (MongoDB connection string)
+- JWT_SECRET
+- PORT number
+- CORS_ORIGIN (comma-separated allowed origins)
 
 
 STEP 3: Run the Server
 ----------------------
 
-Development mode (with hot reload):
-  npm run dev
+Development mode:
+  make dev
+    or
+  go run .
 
-Production mode:
-  npm run build
-  npm start
+Build and run:
+  make build
+  make run
+
+Build binary only:
+  go build -o bin/server .
 
 
 OPTIONAL COMMANDS
 -----------------
-Seed database with sample data:
-  npm run seed
+Verify all packages compile:
+  go build ./...
 
-Clear seeded data:
-  npm run seed:destroy
-
-Run API tests:
-  npm run test
+Clean build artifacts:
+  make clean
 
 
 SERVER ENDPOINTS
@@ -52,4 +54,4 @@ SERVER ENDPOINTS
 Once running, the API will be available at:
   http://localhost:<PORT>
 
-Check your config for the exact port number.
+Check config/config.env for the exact port number (default: 3000).
