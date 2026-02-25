@@ -1,7 +1,0 @@
-
-Import/seed all data:
-  npm run seed
-
-Delete all data:
-  npm run seed:destroy
-

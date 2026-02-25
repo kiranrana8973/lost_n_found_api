@@ -1,14 +1,8 @@
 # Dependencies
 node_modules/
 
-# Environment variables
-# .env
-# config/config.env
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Build output
+dist/
 
 # OS Files
 .DS_Store
@@ -18,6 +12,7 @@ Thumbs.db
 .vscode/
 .idea/
 .claude/
+CLAUDE.md
 *.swp
 *.swo
 *~
@@ -29,17 +24,9 @@ public/item_photos/*
 !public/item_photos/default.jpg
 public/item_videos/*
 
-# Testing
-coverage/
-
-# Documentation (exclude internal notes)
-TEACHING_NOTES.md
-FINAL_REVIEW.md
-db_design.md
-API_TESTING.md
-
-# Build output
-dist/
+# Logs
+*.log
+npm-debug.log*
 
 # Misc
-*.log
+coverage/
