@@ -10,6 +10,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { ItemsModule } from './items/items.module';
 import { CommentsModule } from './comments/comments.module';
 import { SanitizationMiddleware } from './common/middleware/sanitization.middleware';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
 
 @Module({
   imports: [
@@ -43,6 +44,6 @@ import { SanitizationMiddleware } from './common/middleware/sanitization.middlew
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(SanitizationMiddleware).forRoutes('*');
+    consumer.apply(LoggerMiddleware, SanitizationMiddleware).forRoutes('*');
   }
 }

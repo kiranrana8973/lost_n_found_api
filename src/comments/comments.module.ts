@@ -1,12 +1,12 @@
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Comment, CommentSchema } from './schemas/comment.schema';
-import { CommentsController } from './comments.controller';
-import { CommentsService } from './comments.service';
-import { StudentsModule } from '../students/students.module';
-import { ItemsModule } from '../items/items.module';
-import { Student, StudentSchema } from '../students/schemas/student.schema';
-import { Item, ItemSchema } from '../items/schemas/item.schema';
+import { Module } from "@nestjs/common";
+import { MongooseModule } from "@nestjs/mongoose";
+import { Comment, CommentSchema } from "./schemas/comment.schema";
+import { CommentsController } from "./comments.controller";
+import { CommentsService } from "./comments.service";
+import { StudentsModule } from "../students/students.module";
+import { ItemsModule } from "../items/items.module";
+import { Student, StudentSchema } from "../students/schemas/student.schema";
+import { Item, ItemSchema } from "../items/schemas/item.schema";
 
 @Module({
   imports: [
