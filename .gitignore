@@ -31,5 +31,10 @@ npm-debug.log*
 # Client build
 client/dist/
 
+# Environment files
+config/*.env
+.env
+.env.*
+
 # Misc
 coverage/

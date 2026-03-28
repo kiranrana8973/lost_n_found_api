@@ -31,7 +31,12 @@ async function bootstrap() {
   const allowedOrigins = corsOrigins.split(',').filter(Boolean);
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (server-to-server, curl) only in development
+      if (!origin) {
+        const isDev = configService.get('NODE_ENV') !== 'production';
+        return callback(null, isDev);
+      }
+      if (allowedOrigins.length > 0 && allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));

@@ -120,6 +120,8 @@ export class StudentsService {
       throw new ForbiddenException('Not authorized to update this student profile');
     }
 
+    const isPasswordChange = !!dto.password;
+
     if (dto.name) student.name = dto.name;
     if (dto.email) student.email = dto.email;
     if (dto.username) student.username = dto.username;
@@ -129,6 +131,12 @@ export class StudentsService {
     if (dto.password) student.password = dto.password;
 
     await student.save();
+
+    // Invalidate all refresh tokens when password changes
+    if (isPasswordChange) {
+      await this.refreshTokenModel.deleteMany({ student: student._id });
+    }
+
     return student;
   }
 

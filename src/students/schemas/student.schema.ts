@@ -27,7 +27,7 @@ export class Student {
 
   @Prop({
     required: [true, 'Please add a password'],
-    minlength: 6,
+    minlength: 8,
     select: false,
   })
   password: string;
@@ -41,7 +41,7 @@ export class Student {
   @Prop({ default: 'default-profile.png', trim: true })
   profilePicture: string;
 
-  @Prop()
+  @Prop({ default: 'student', enum: ['student', 'admin'] })
   role: string;
 
   @Prop({ type: Date, default: Date.now })

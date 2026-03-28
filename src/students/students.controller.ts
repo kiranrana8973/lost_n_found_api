@@ -35,6 +35,7 @@ export class StudentsController {
 
   @Post()
   @Public()
+  @Throttle({ default: { ttl: 60 * 60 * 1000, limit: 5 } })
   async create(@Body() dto: CreateStudentDto) {
     const student = await this.studentsService.create(dto);
     return { success: true, data: student };
@@ -74,7 +75,7 @@ export class StudentsController {
   }
 
   @Post('upload')
-  @Public()
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('profilePicture', profilePictureMulterOptions))
   async uploadProfilePicture(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('Please upload a file');
@@ -96,7 +97,7 @@ export class StudentsController {
   }
 
   @Get(':id')
-  @Public()
+  @UseGuards(JwtAuthGuard)
   async findOne(@Param('id', ParseObjectIdPipe) id: string) {
     const student = await this.studentsService.findById(id);
     return { success: true, data: student };

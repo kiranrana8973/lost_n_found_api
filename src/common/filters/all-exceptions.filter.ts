@@ -4,11 +4,15 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+  private readonly isProduction = process.env.NODE_ENV === 'production';
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -31,8 +35,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
       if (err.code === 11000) {
         status = HttpStatus.BAD_REQUEST;
-        const field = Object.keys(err.keyValue || {})[0];
-        message = `${field} already exists`;
+        message = this.isProduction
+          ? 'A record with this value already exists'
+          : `${Object.keys(err.keyValue || {})[0]} already exists`;
       } else if (err.name === 'ValidationError') {
         status = HttpStatus.BAD_REQUEST;
         const messages = Object.values(err.errors || {}).map(
@@ -49,8 +54,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
         status = HttpStatus.UNAUTHORIZED;
         message = 'Token expired';
       } else {
-        message = err.message || 'Internal Server Error';
+        message = this.isProduction
+          ? 'Internal Server Error'
+          : err.message || 'Internal Server Error';
       }
+    }
+
+    // Log all server errors for monitoring
+    if (status >= 500) {
+      this.logger.error(
+        `${status} - ${exception instanceof Error ? exception.message : 'Unknown error'}`,
+        exception instanceof Error ? exception.stack : undefined,
+      );
     }
 
     response.status(status).json({
