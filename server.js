@@ -25,6 +25,7 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: () => process.env.DISABLE_RATE_LIMIT === "true",
 });
 
 // Rate limiter for auth routes (stricter)
@@ -33,6 +34,17 @@ const authLimiter = rateLimit({
   max: 5, // Limit each IP to 5 login attempts per windowMs
   message: "Too many login attempts, please try again after 15 minutes.",
   skipSuccessfulRequests: true, // Don't count successful requests
+  skip: () => process.env.DISABLE_RATE_LIMIT === "true",
+});
+
+// Rate limiter for account registration (prevent signup spam)
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // Limit each IP to 10 registrations per hour
+  message: "Too many accounts created from this IP, please try again in an hour.",
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.DISABLE_RATE_LIMIT === "true",
 });
 
 // Middleware
@@ -42,42 +54,52 @@ app.use(cookieParser()); // Cookie parser middleware
 
 // Custom security middleware (compatible with Express v5)
 app.use((req, res, next) => {
-  // Fields that should not be sanitized (emails, URLs, etc.)
-  const skipFields = [
+  // Fields that opt out of XSS escaping only. NoSQL operator stripping ALWAYS runs.
+  const skipXssEscape = new Set([
     "email",
     "username",
     "password",
     "mediaUrl",
     "profilePicture",
-  ];
+  ]);
 
-  const sanitize = (obj, parentKey = "") => {
-    if (obj && typeof obj === "object") {
-      for (const key in obj) {
-        // Skip sanitization for specific fields
-        if (skipFields.includes(key)) {
-          continue;
+  const sanitize = (obj) => {
+    if (!obj || typeof obj !== "object") return obj;
+    for (const key of Object.keys(obj)) {
+      // Strip Mongo operator keys regardless of field name. Closes the hole
+      // where { email: { $gt: "" } } previously bypassed the skip-list.
+      if (key.startsWith("$") || key.includes(".")) {
+        delete obj[key];
+        continue;
+      }
+      const val = obj[key];
+      if (typeof val === "string") {
+        if (
+          !skipXssEscape.has(key) &&
+          !val.includes("@") &&
+          !val.startsWith("http")
+        ) {
+          obj[key] = val.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
-
-        if (typeof obj[key] === "string") {
-          // Prevent NoSQL injection - Remove $ from strings (but keep .)
-          obj[key] = obj[key].replace(/\$/g, "");
-
-          // Prevent XSS attacks - Only escape HTML in text fields, not emails/URLs
-          if (!obj[key].includes("@") && !obj[key].startsWith("http")) {
-            obj[key] = obj[key].replace(/</g, "&lt;").replace(/>/g, "&gt;");
-          }
-        } else if (typeof obj[key] === "object") {
-          sanitize(obj[key], key);
-        }
+      } else if (val && typeof val === "object") {
+        sanitize(val);
       }
     }
     return obj;
   };
 
-  if (req.body) req.body = sanitize(req.body);
-  if (req.params) req.params = sanitize(req.params);
-  // Note: req.query is read-only in Express v5, so we skip it
+  if (req.body) sanitize(req.body);
+  if (req.params) sanitize(req.params);
+
+  // Express 5 makes req.query a getter; replace with a sanitized copy.
+  if (req.query && Object.keys(req.query).length > 0) {
+    const sanitizedQuery = sanitize({ ...req.query });
+    Object.defineProperty(req, "query", {
+      value: sanitizedQuery,
+      writable: true,
+      configurable: true,
+    });
+  }
 
   next();
 });
@@ -113,9 +135,10 @@ app.use("/api/v1/batches", batchRoutes);
 const categoryRoutes = require("./routes/category_route");
 app.use("/api/v1/categories", categoryRoutes);
 
-// Apply stricter rate limiting to login endpoint
+// Apply stricter rate limiting to login + registration endpoints
 const studentRoutes = require("./routes/student_route");
 app.use("/api/v1/students/login", authLimiter);
+app.post("/api/v1/students", registerLimiter, (req, res, next) => next());
 app.use("/api/v1/students", studentRoutes);
 
 const itemRoutes = require("./routes/item_route");

@@ -21,17 +21,15 @@ const extractMentions = (text) => {
 // @route   POST /api/v1/comments
 // @access  Public (should be protected in production)
 exports.createComment = asyncHandler(async (req, res) => {
-  const { text, itemId, commentedBy, parentCommentId } = req.body;
+  const { text, itemId, parentCommentId } = req.body;
 
-  // Validate required fields
-  if (!text || !itemId || !commentedBy) {
+  if (!text || !itemId) {
     return res.status(400).json({
       success: false,
-      message: "Please provide text, itemId, and commentedBy",
+      message: "Please provide text and itemId",
     });
   }
 
-  // Check if item exists
   const item = await Item.findById(itemId);
   if (!item) {
     return res.status(404).json({
@@ -40,20 +38,13 @@ exports.createComment = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check if commenter exists
-  const commenter = await Student.findById(commentedBy);
-  if (!commenter) {
-    return res.status(404).json({
-      success: false,
-      message: "Student not found",
-    });
-  }
+  // Author is the authenticated user; never trust a body-supplied commentedBy.
+  const commentedBy = req.user._id;
 
   // Extract mentioned usernames from text
   const mentionedUsernames = extractMentions(text);
   const mentionedUsers = [];
 
-  // Find mentioned users by username
   if (mentionedUsernames.length > 0) {
     const users = await Student.find({
       username: { $in: mentionedUsernames },
@@ -61,7 +52,6 @@ exports.createComment = asyncHandler(async (req, res) => {
     mentionedUsers.push(...users.map((user) => user._id));
   }
 
-  // Check if this is a reply
   let isReply = false;
   if (parentCommentId) {
     const parentComment = await Comment.findById(parentCommentId);
@@ -74,7 +64,6 @@ exports.createComment = asyncHandler(async (req, res) => {
     isReply = true;
   }
 
-  // Create comment
   const comment = await Comment.create({
     text,
     item: itemId,
@@ -291,14 +280,9 @@ exports.deleteComment = asyncHandler(async (req, res) => {
 // @route   POST /api/v1/comments/:id/like
 // @access  Public (should be protected)
 exports.toggleLike = asyncHandler(async (req, res) => {
-  const { studentId } = req.body;
-
-  if (!studentId) {
-    return res.status(400).json({
-      success: false,
-      message: "Please provide studentId",
-    });
-  }
+  // Liker is the authenticated user; never trust a body-supplied studentId,
+  // otherwise any user could like/unlike on someone else's behalf.
+  const studentId = req.user._id;
 
   const comment = await Comment.findById(req.params.id);
 
@@ -309,23 +293,13 @@ exports.toggleLike = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check if student exists
-  const student = await Student.findById(studentId);
-  if (!student) {
-    return res.status(404).json({
-      success: false,
-      message: "Student not found",
-    });
-  }
-
-  // Check if already liked
-  const likeIndex = comment.likes.indexOf(studentId);
+  const likeIndex = comment.likes.findIndex(
+    (id) => id.toString() === studentId.toString()
+  );
 
   if (likeIndex > -1) {
-    // Unlike - remove from likes array
     comment.likes.splice(likeIndex, 1);
   } else {
-    // Like - add to likes array
     comment.likes.push(studentId);
   }
 

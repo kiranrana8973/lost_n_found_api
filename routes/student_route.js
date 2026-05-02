@@ -13,7 +13,7 @@ const {
   uploadProfilePicture,
 } = require("../controllers/student_controller");
 
-router.post("/upload", upload.single("profilePicture"), uploadProfilePicture);
+router.post("/upload", protect, upload.single("profilePicture"), uploadProfilePicture);
 
 router.post("/", createStudent);
 router.get("/", protect, getAllStudents); // Protected - prevents user enumeration

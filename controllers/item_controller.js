@@ -7,10 +7,10 @@ const fs = require("fs");
 // @route   POST /api/v1/items
 // @access  Public
 exports.createItem = asyncHandler(async (req, res) => {
-  const { itemName, description, type, category, location, media, reportedBy } =
-    req.body;
+  const { itemName, description, type, category, location, media } = req.body;
 
-  // Create the item
+  // Owner is taken from the authenticated user, never from request body, so an
+  // attacker cannot create items on behalf of another student.
   const item = await Item.create({
     itemName,
     description,
@@ -18,7 +18,7 @@ exports.createItem = asyncHandler(async (req, res) => {
     category,
     location,
     media,
-    reportedBy,
+    reportedBy: req.user._id,
   });
 
   res.status(201).json({

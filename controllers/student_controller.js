@@ -1,8 +1,13 @@
 const asyncHandler = require("../middleware/async");
+const bcrypt = require("bcryptjs");
 const Student = require("../models/student_model");
 const Batch = require("../models/batch_model");
 const path = require("path");
 const fs = require("fs");
+
+// Computed once at startup; used to equalize bcrypt.compare timing on login
+// when the email doesn't exist, so attackers can't enumerate accounts via timing.
+const TIMING_DUMMY_HASH = bcrypt.hashSync("equalize-login-timing", 10);
 
 // @desc    Create a new student
 // @route   POST /api/students
@@ -62,16 +67,19 @@ exports.createStudent = asyncHandler(async (req, res) => {
 exports.loginStudent = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
+  if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
     return res
       .status(400)
       .json({ message: "Please provide an email and password" });
   }
 
-  // Check if student exists
   const student = await Student.findOne({ email }).select("+password");
 
-  if (!student || !(await student.matchPassword(password))) {
+  // Always run bcrypt.compare so timing doesn't leak whether the email exists.
+  const candidateHash = student?.password ?? TIMING_DUMMY_HASH;
+  const matches = await bcrypt.compare(password, candidateHash);
+
+  if (!student || !matches) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
@@ -221,14 +229,13 @@ const sendTokenResponse = (student, statusCode, res) => {
   const token = student.getSignedJwtToken();
 
   const options = {
-    //Cookie will expire in 30 days
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
+    sameSite: "strict",
   };
 
-  // Cookie security is false .if you want https then use this code. do not use in development time
   if (process.env.NODE_ENV === "production") {
     options.secure = true;
   }
