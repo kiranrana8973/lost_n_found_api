@@ -13,7 +13,7 @@ const errorHandler = require("./middleware/errorHandler");
 const app = express();
 
 // Load environment variables
-dotenv.config({ path: "./config/config.env" });
+dotenv.config({ path: "./config/config.env", quiet: true });
 
 // Connect to the database
 connectDB();

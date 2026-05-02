@@ -33,54 +33,184 @@ function logTest(name, success, error = null) {
   }
 }
 
+// Helper for negative-path tests: passes when the request rejects with the expected status.
+async function expectStatus(name, expectedStatus, requestFn) {
+  try {
+    await requestFn();
+    logTest(name, false, new Error(`expected ${expectedStatus}, got 2xx`));
+  } catch (error) {
+    const actual = error.response?.status;
+    if (actual === expectedStatus) {
+      logTest(name, true);
+    } else {
+      logTest(name, false, error);
+    }
+  }
+}
+
+// Pull an auth token before running protected-route tests. Tries the seeded
+// credential first (per README); if that fails, falls back to registering a
+// new student against any existing batch. If neither works (DB not seeded),
+// protected tests will be skipped via the `if (authToken)` guards downstream.
+async function bootstrapAuth() {
+  console.log('\n🔑 Bootstrapping auth...'.cyan.bold);
+
+  try {
+    const res = await axios.post(`${BASE_URL}/students/login`, {
+      email: 'kiranrana@softwarica.edu.np',
+      password: 'password123',
+    });
+    authToken = res.data.token;
+    testStudentId = res.data.data?._id;
+    logTest('bootstrapAuth - login with seeded credential', true);
+    return;
+  } catch (_) {
+    // Fall through to register a fresh student.
+  }
+
+  try {
+    const batchesRes = await axios.get(`${BASE_URL}/batches`);
+    const seededBatchId = batchesRes.data.data?.[0]?._id;
+    if (!seededBatchId) {
+      logTest(
+        'bootstrapAuth - no batches found; run `node seed-data.js -i` first',
+        false,
+        new Error('no seed data — protected tests will be skipped')
+      );
+      return;
+    }
+
+    const unique = Date.now();
+    const regRes = await axios.post(`${BASE_URL}/students`, {
+      name: 'Test Bootstrap',
+      username: `boot${unique}`,
+      email: `boot${unique}@example.com`,
+      password: 'password123',
+      batchId: seededBatchId,
+      phoneNumber: '+10000000000',
+    });
+    testStudentId = regRes.data.data._id;
+
+    const loginRes = await axios.post(`${BASE_URL}/students/login`, {
+      email: `boot${unique}@example.com`,
+      password: 'password123',
+    });
+    authToken = loginRes.data.token;
+    logTest('bootstrapAuth - register + login fresh student', true);
+  } catch (error) {
+    logTest('bootstrapAuth - fallback registration', false, error);
+  }
+}
+
 // Test Functions
 async function testBatchEndpoints() {
   console.log('\n📦 Testing Batch Endpoints...'.cyan.bold);
 
-  // Create Batch
-  try {
-    const res = await axios.post(`${BASE_URL}/batches`, {
-      batchName: 'Test Batch 2024',
-      year: 2024,
-      department: 'Computer Science'
-    });
-    testBatchId = res.data.data._id;
-    logTest('POST /batches - Create batch', true);
-  } catch (error) {
-    logTest('POST /batches - Create batch', false, error);
-  }
+  const authHeader = authToken
+    ? { headers: { Authorization: `Bearer ${authToken}` } }
+    : {};
+  const uniqueName = `Test Batch ${Date.now()}`;
 
-  // Get All Batches
+  // --- Happy path ---
+
+  // Get All Batches (public)
   try {
     await axios.get(`${BASE_URL}/batches`);
-    logTest('GET /batches - Get all batches', true);
+    logTest('GET /batches - list batches', true);
   } catch (error) {
-    logTest('GET /batches - Get all batches', false, error);
+    logTest('GET /batches - list batches', false, error);
   }
 
-  // Get Batch by ID
+  // Create Batch (protected) — schema fields are batchName + status only
+  if (authToken) {
+    try {
+      const res = await axios.post(
+        `${BASE_URL}/batches`,
+        { batchName: uniqueName, status: 'active' },
+        authHeader
+      );
+      testBatchId = res.data.data._id;
+      logTest('POST /batches - create batch (protected)', true);
+    } catch (error) {
+      logTest('POST /batches - create batch (protected)', false, error);
+    }
+  }
+
+  // Get Batch by ID (public)
   if (testBatchId) {
     try {
       await axios.get(`${BASE_URL}/batches/${testBatchId}`);
-      logTest('GET /batches/:id - Get batch by ID', true);
+      logTest('GET /batches/:id - get by ID', true);
     } catch (error) {
-      logTest('GET /batches/:id - Get batch by ID', false, error);
+      logTest('GET /batches/:id - get by ID', false, error);
     }
   }
 
-  // Update Batch (Protected - needs auth)
+  // Update Batch — name AND status (status update is the bug we just fixed)
   if (testBatchId && authToken) {
     try {
-      await axios.put(`${BASE_URL}/batches/${testBatchId}`, {
-        batchName: 'Updated Test Batch 2024'
-      }, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-      logTest('PUT /batches/:id - Update batch (protected)', true);
+      const res = await axios.put(
+        `${BASE_URL}/batches/${testBatchId}`,
+        { batchName: `${uniqueName} (updated)`, status: 'completed' },
+        authHeader
+      );
+      const ok =
+        res.data.data?.status === 'completed' &&
+        res.data.data?.batchName === `${uniqueName} (updated)`;
+      logTest('PUT /batches/:id - update name + status', ok, ok ? null : new Error('fields not persisted'));
     } catch (error) {
-      logTest('PUT /batches/:id - Update batch (protected)', false, error);
+      logTest('PUT /batches/:id - update name + status', false, error);
     }
   }
+
+  // --- Negative paths ---
+
+  // Auth required on POST
+  await expectStatus('POST /batches - 401 without token', 401, () =>
+    axios.post(`${BASE_URL}/batches`, { batchName: 'Should Fail' })
+  );
+
+  // Auth required on PUT
+  if (testBatchId) {
+    await expectStatus('PUT /batches/:id - 401 without token', 401, () =>
+      axios.put(`${BASE_URL}/batches/${testBatchId}`, { batchName: 'Should Fail' })
+    );
+  }
+
+  // Validation: empty batchName → controller short-circuits with 400
+  if (authToken) {
+    await expectStatus('POST /batches - 400 missing batchName', 400, () =>
+      axios.post(`${BASE_URL}/batches`, { status: 'active' }, authHeader)
+    );
+  }
+
+  // Validation: minlength (schema-level) — single char fails minlength: 2
+  if (authToken) {
+    await expectStatus('POST /batches - 400 batchName too short', 400, () =>
+      axios.post(`${BASE_URL}/batches`, { batchName: 'A' }, authHeader)
+    );
+  }
+
+  // Duplicate batchName → unique index → errorHandler maps 11000 to 400
+  if (authToken && testBatchId) {
+    await expectStatus('POST /batches - 400 duplicate batchName', 400, () =>
+      axios.post(
+        `${BASE_URL}/batches`,
+        { batchName: `${uniqueName} (updated)`, status: 'active' },
+        authHeader
+      )
+    );
+  }
+
+  // 404 for a well-formed but non-existent ObjectId
+  await expectStatus('GET /batches/:id - 404 unknown ID', 404, () =>
+    axios.get(`${BASE_URL}/batches/507f1f77bcf86cd799439011`)
+  );
+
+  // 404 for a malformed ID (Mongoose CastError → errorHandler returns 404)
+  await expectStatus('GET /batches/:id - 404 malformed ID', 404, () =>
+    axios.get(`${BASE_URL}/batches/not-an-objectid`)
+  );
 }
 
 async function testStudentEndpoints() {
@@ -305,6 +435,7 @@ async function runAllTests() {
   console.log('=' . repeat(60));
 
   try {
+    await bootstrapAuth();
     await testBatchEndpoints();
     await testStudentEndpoints();
     await testItemEndpoints();

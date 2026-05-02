@@ -62,13 +62,16 @@ exports.getBatchById = asyncHandler(async (req, res) => {
 // @access  Private (Admin)
 
 exports.updateBatch = asyncHandler(async (req, res) => {
-  const { batchName } = req.body;
+  const { batchName, status } = req.body;
 
-  const batch = await Batch.findByIdAndUpdate(
-    req.params.id,
-    { batchName },
-    { new: true, runValidators: true }
-  );
+  const updates = {};
+  if (batchName !== undefined) updates.batchName = batchName;
+  if (status !== undefined) updates.status = status;
+
+  const batch = await Batch.findByIdAndUpdate(req.params.id, updates, {
+    new: true,
+    runValidators: true,
+  });
 
   if (!batch) {
     return res.status(404).json({ message: "Batch not found" });

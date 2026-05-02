@@ -183,6 +183,23 @@ Authorization: Bearer <token>
 }
 ```
 
+**Update Batch:**
+
+Both `batchName` and `status` are independently updatable. Send only the fields you want to change — omitted fields are left untouched.
+
+```http
+PUT /api/v1/batches/:id
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "batchName": "35-A (rev)",
+  "status": "completed"
+}
+```
+
+Allowed `status` values: `active`, `completed`, `cancelled`.
+
 ---
 
 ### Category Endpoints
@@ -433,6 +450,29 @@ node seed-data.js -d
 | michael.chen@softwarica.edu.np  | password123 |
 
 All seeded accounts use password: `password123`
+
+---
+
+## Testing
+
+The project ships with a single integration test runner: [test-api.js](test-api.js). It hits a live server with `axios` and reports pass/fail per endpoint.
+
+```bash
+# 1. Start the server in one terminal
+npm run dev
+
+# 2. (First time only) seed the DB so protected-route tests can authenticate
+node seed-data.js -i
+
+# 3. Run the suite in another terminal
+npm test
+```
+
+**How auth bootstrap works:** `test-api.js` first tries logging in as the seeded user `kiranrana@softwarica.edu.np`. If that fails, it falls back to registering a new student against any existing batch and logging in. If neither path produces a token (e.g. the DB has never been seeded), protected-route tests are skipped with a clear warning instead of cascading silent failures.
+
+**Disabling rate limits during tests:** the auth limiter caps `/students/login` at 5 attempts / 15 minutes, which the test suite can hit on repeat runs. Set `DISABLE_RATE_LIMIT=true` in `config/config.env` while testing to bypass all three limiters (global, login, registration).
+
+The test suite covers happy paths plus the following negative cases for batches: 401 on unauthenticated POST/PUT, 400 on missing/short `batchName`, 400 on duplicate `batchName`, 404 for unknown and malformed IDs.
 
 ---
 
