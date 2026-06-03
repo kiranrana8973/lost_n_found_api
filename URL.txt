@@ -5,6 +5,7 @@
 Base URL:   http://localhost:3000
 API Prefix: /api/v1
 
+
 AUTHENTICATION
 ----------------------------------------------------------------
 Protected routes require a JWT in the Authorization header:
