@@ -6,6 +6,18 @@ A simple Lost and Found REST API for mobile and web applications.
 
 ---
 
+## Mobile App (Flutter)
+
+The Flutter mobile app that consumes this API is available here:
+
+- https://github.com/kiranrana8973/lost_n_found_mobile_api_starter.git
+
+```bash
+git clone https://github.com/kiranrana8973/lost_n_found_mobile_api_starter.git
+```
+
+---
+
 ## Database Design (MongoDB)
 
 ```
